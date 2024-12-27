@@ -1,4 +1,4 @@
-export const  devURL= "https://digicarebe.onrender.com"
+export const  devURL= "https://dev-server-fpwk.onrender.com"
 
 // export const  devURL= "http://192.168.25.241:8000"
 

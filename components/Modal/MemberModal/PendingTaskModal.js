@@ -1,29 +1,79 @@
 import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet, FlatList} from 'react-native';
 import Modal from 'react-native-modal';
+import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import moment from 'moment';
+import MapView, { Marker } from 'react-native-maps';
 
 function PendingTaskModal({visible, setVisible, selectedPendingTasks}) {
-  // Render each task item in the modal
-  const renderTaskItem = ({item}) => (
-    <View style={styles.taskCard}>
-      {/* Icon */}
-      <Icon
-        name="check-circle"
-        size={24}
-        color="#28a745"
-        style={styles.taskIcon}
-      />
+  const navigation = useNavigation();
 
-      <View>
-        <Text style={styles.taskName}>{item.taskName}</Text>
-        <Text style={styles.taskLocation}>{item.location}</Text>
-        <Text style={styles.taskDate}>
-          {new Date(item.dateTime).toLocaleString()}
-        </Text>
-      </View>
-    </View>
-  );
+  // console.log('selectedPendingTasks', selectedPendingTasks);
+
+  const renderTaskItem = ({item}) => {
+    const formattedDateTime = moment(item.dateTime).format('ddd, DD hh:mm A');
+    const {lat, lng} = item.location;
+
+    return (
+      <TouchableOpacity
+        onPress={() =>
+          navigation.navigate('MapInsight', {memberId: item.taskId})
+        }>
+        <View style={styles.taskCard}>
+          <View style={styles.mapContainer}>
+            <MapView
+              style={styles.map}
+              initialRegion={{
+                latitude: lat,
+                longitude: lng,
+                latitudeDelta: 0.01, // Zoom level
+                longitudeDelta: 0.01, // Zoom level
+              }}>
+              <Marker
+                coordinate={{latitude: lat, longitude: lng}}
+                title="Location"
+                description={`Lat: ${lat.toFixed(2)}, Lng: ${lng.toFixed(2)}`}
+              />
+            </MapView>
+          </View>
+          <View>
+            <Text style={styles.taskName}>
+              {item?.task?.location || 'Test location'}
+            </Text>
+            {/* <Text style={styles.taskLocation}>
+                Location: Lat {item.location.lat.toFixed(2)}, Lng{' '}
+                {item.location.lng.toFixed(2)}
+              </Text> */}
+            <View style={styles.row}>
+              <Icon
+                name="calendar"
+                size={16}
+                color="#376ADA"
+                style={styles.icon}
+              />
+              <Text style={{color: 'gray', paddingHorizontal: 5}}>
+                {' '}
+                {formattedDateTime}
+              </Text>
+            </View>
+        
+            <View style={styles.tag}>
+              <Icon
+                name="map-marker"
+                size={10}
+                color="#fff"
+                style={styles.icon}
+              />
+              <Text style={styles.tagText}>
+                {item?.task?.location || 'Test Indai'}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <Modal
@@ -35,18 +85,23 @@ function PendingTaskModal({visible, setVisible, selectedPendingTasks}) {
         <TouchableOpacity onPress={() => setVisible(false)}>
           <Text style={styles.closeIndicator}>Cancel</Text>
         </TouchableOpacity>
+
         {/* Modal Header */}
         <View style={styles.modalHeader}>
           <Text style={styles.modalTitle}>Pending Tasks</Text>
         </View>
 
         {/* Task List */}
-        <FlatList
-          data={selectedPendingTasks}
-          renderItem={renderTaskItem}
-          keyExtractor={item => item.taskId}
-          contentContainerStyle={styles.taskList}
-        />
+        {selectedPendingTasks.length > 0 ? (
+          <FlatList
+            data={selectedPendingTasks}
+            renderItem={renderTaskItem}
+            keyExtractor={item => item.taskId}
+            contentContainerStyle={styles.taskList}
+          />
+        ) : (
+          <Text style={styles.noTasksText}>No Pending Tasks</Text>
+        )}
       </View>
     </Modal>
   );
@@ -56,82 +111,97 @@ export default PendingTaskModal;
 
 const styles = StyleSheet.create({
   modal: {
-    margin: 0, // No margin for full width
-    justifyContent: 'flex-end', // Align modal to the bottom of the screen
+    margin: 0,
+    justifyContent: 'flex-end',
   },
   modalContent: {
-    height: '80%', // 80% of the screen height
-    width: '100%', // Full width
-    backgroundColor: '#fff', // Modal background
+    backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 15,
   },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 20,
+  closeIndicator: {
+    textAlign: 'right',
+    color: 'red',
+    fontSize: 16,
+    fontWeight: '600',
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: 'black',
-  },
-  closeButton: {
-    backgroundColor: '#007bff',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-  },
-  closeText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    textAlign: 'center',
   },
   taskList: {
-    width: '100%',
-    paddingBottom: 20,
+    paddingBottom: 10,
   },
   taskCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent:"space-around",
     backgroundColor: '#f8f9fa',
-    padding: 15,
-    marginBottom: 15,
+    padding: 10,
     borderRadius: 10,
+    marginBottom: 10,
     shadowColor: '#000',
     shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 5,
-    width: '100%',
-    flexDirection: 'column',
-    alignItems: 'flex-start', // Align icon and text horizontally
-  },
-  taskIcon: {
-    marginRight: 10, // Space between the icon and text
+    shadowRadius: 5,
+    shadowOffset: {width: 0, height: 2},
+    elevation: 3,
+    marginHorizontal: 1,
   },
   taskName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#007bff',
   },
   taskLocation: {
     fontSize: 14,
     color: '#555',
-    marginVertical: 5,
   },
   taskDate: {
-    fontSize: 12,
-    color: '#888',
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 5,
   },
-
-  closeIndicator: {
-    backgroundColor: 'black',
-    width: 220,
-    height: 4,
-    borderRadius: 9,
-    marginVertical: 0,
-    marginBottom: 17,
+  taskStatus: {
+    fontSize: 14,
+    color: '#007bff',
+  },
+  noTasksText: {
+    textAlign: 'center',
+    color: '#999',
+    fontSize: 16,
+    marginTop: 20,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#376ADA',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+    margin: 5, // Space between tags
+  },
+  tagText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    paddingHorizontal: 5,
+  },
+  mapContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+    overflow: 'hidden', // Ensures the map fits within the rounded corners
+    marginBottom: 10,
+  },
+  map: {
+    flex: 1,
   },
 });

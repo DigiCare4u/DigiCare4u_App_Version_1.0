@@ -108,10 +108,10 @@ export const updateLocationOnDisplacement = async liveLocation => {
       },
     );
 
-    console.log(
-      ' -------------------------------- UPDATED !!!!! ------------------------------------- ..... ',
-    );
-    console.log(response.status);
+    // console.log(
+    //   ' -------------------------------- UPDATED !!!!! ------------------------------------- ..... ',
+    // );
+    // console.log(response.status);
 
     // setMemberProfileError(null); // Reset error state on successful update
   } catch (err) {
@@ -128,7 +128,9 @@ export const updateLocationIfNeeded_bg = async (
   longitude,
   prevLocation,
 ) => {
-  // console.log('updateLocationIfNeeded_bg chala');
+  console.log('prevLocation', prevLocation);
+  console.log('longitude', longitude);
+  console.log('latitude', latitude)
 
   const geoCoded = await getAddressFromCoordinates_v1(prevLocation)
   console.log('geoCoded', geoCoded.data?.features[0]?.properties?.context?.locality?.name);
@@ -160,12 +162,12 @@ export const updateLocationIfNeeded_bg = async (
     lon2,
   );
   // console.log('=======[coreTracking]========')
-  console.log(' DISPLACEMENT :', distance);
+  // console.log(' DISPLACEMENT :', distance);
 
   if (distance > 120) {
     // if (true) {
     try {
-      console.log('----- BG Updation...............');
+      // console.log('----- BG Updation...............');
 
       const jwtToken = await AsyncStorage.getItem('token');
 

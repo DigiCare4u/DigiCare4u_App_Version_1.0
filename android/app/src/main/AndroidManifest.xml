@@ -12,7 +12,7 @@
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
 
@@ -26,7 +26,6 @@
     android:supportsRtl="true">
 
 
-
     <!-- <receiver
       android:name=".AppKilledReceiver"
       android:enabled="true"
@@ -37,9 +36,14 @@
       </intent-filter>
     </receiver> -->
 
+    <!-- api two -->
+    <!-- <meta-data
+      android:name="com.google.android.geo.API_KEY"
+      android:value="AIzaSyCTe9J53cwj-60MvLB5G2p01bDXr4q-7qo" /> -->
+    <!-- api one -->
     <meta-data
       android:name="com.google.android.geo.API_KEY"
-      android:value="AIzaSyCTe9J53cwj-60MvLB5G2p01bDXr4q-7qo" />
+      android:value="AIzaSyDs7POzbGW-p-9-SLvVxWEug62hPwUR2go" />
     <activity
       android:name=".MainActivity"
       android:label="@string/app_name"
@@ -52,9 +56,6 @@
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
     </activity>
-
-
-
 
 
     <service

@@ -5,143 +5,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { devURL } from '../../constants/endpoints';
 
-// Fake assignment data
-const assignments = [
-  {
-    id: '1',
-    name: 'John Doe',
-    totalTasks: 10,
-    pendingTasks: 3,
-    completedTasks: 7,
-    imageUrl: 'https://via.placeholder.com/150',
-    address: 'gomati nagar, lucknow, uttar pradesh, 226011',
-    completedTasksDateTime: '2024-12-18T04:24:32.532Z',
-    completedTaskDetails: [
-      {
-        taskId: 'C1',
-        location: 'Aliganj, Lucknow, Uttar Pradesh',
-        dateTime: '2024-12-17T10:15:00.000Z',
-      },
-      {
-        taskId: 'C2',
-        location: 'Hazratganj, Lucknow, Uttar Pradesh',
-        dateTime: '2024-12-16T14:45:00.000Z',
-      },
-      {
-        taskId: 'C3',
-        location: 'Chowk, Lucknow, Uttar Pradesh',
-        dateTime: '2024-12-15T09:30:00.000Z',
-      },
-    ],
-    inCompleteTaskDetails: [
-      {
-        taskId: 'IC1',
-        location: 'Aashiana, Lucknow, Uttar Pradesh',
-        dateTime: '2024-12-14T16:00:00.000Z',
-      },
-    ],
-  },
-  {
-    id: '2',
-    name: 'Jane Smith',
-    totalTasks: 8,
-    pendingTasks: 2,
-    completedTasks: 6,
-    imageUrl: 'https://via.placeholder.com/150',
-    address: 'gomati nagar, lucknow, uttar pradesh, 226011',
-    completedTasksDateTime: '2024-12-18T04:24:32.532Z',
-    completedTaskDetails: [
-      {
-        taskId: 'C1',
-        location: 'Indira Nagar, Lucknow, Uttar Pradesh',
-        dateTime: '2024-12-16T11:45:00.000Z',
-      },
-      {
-        taskId: 'C2',
-        location: 'Gomti Nagar, Lucknow, Uttar Pradesh',
-        dateTime: '2024-12-15T17:30:00.000Z',
-      },
-    ],
-    inCompleteTaskDetails: [
-      {
-        taskId: 'IC1',
-        location: 'Mahanagar, Lucknow, Uttar Pradesh',
-        dateTime: '2024-12-14T12:00:00.000Z',
-      },
-      {
-        taskId: 'IC2',
-        location: 'Rajajipuram, Lucknow, Uttar Pradesh',
-        dateTime: '2024-12-13T10:00:00.000Z',
-      },
-    ],
-  },
-  {
-    id: '3',
-    name: 'Alice Johnson',
-    totalTasks: 12,
-    pendingTasks: 4,
-    completedTasks: 8,
-    imageUrl: 'https://via.placeholder.com/150',
-    address: 'gomati nagar, lucknow, uttar pradesh, 226011',
-    completedTasksDateTime: '2024-12-18T04:24:32.532Z',
-    completedTaskDetails: [
-      {
-        taskId: 'C1',
-        location: 'Alambagh, Lucknow, Uttar Pradesh',
-        dateTime: '2024-12-16T08:45:00.000Z',
-      },
-      {
-        taskId: 'C2',
-        location: 'Charbagh, Lucknow, Uttar Pradesh',
-        dateTime: '2024-12-15T14:30:00.000Z',
-      },
-    ],
-    inCompleteTaskDetails: [
-      {
-        taskId: 'IC1',
-        location: 'Telibagh, Lucknow, Uttar Pradesh',
-        dateTime: '2024-12-14T09:00:00.000Z',
-      },
-      {
-        taskId: 'IC2',
-        location: 'Chinhat, Lucknow, Uttar Pradesh',
-        dateTime: '2024-12-13T16:30:00.000Z',
-      },
-    ],
-  },
-  {
-    id: '4',
-    name: 'Michael Brown',
-    totalTasks: 5,
-    pendingTasks: 1,
-    completedTasks: 4,
-    imageUrl: 'https://via.placeholder.com/150',
-    address: 'gomati nagar, lucknow, uttar pradesh, 226011',
-    completedTasksDateTime: '2024-12-18T04:24:32.532Z',
-    completedTaskDetails: [
-      {
-        taskId: 'C1',
-        location: 'Hazratganj, Lucknow, Uttar Pradesh',
-        dateTime: '2024-12-16T10:45:00.000Z',
-      },
-    ],
-    inCompleteTaskDetails: [
-      {
-        taskId: 'IC1',
-        location: 'Aliganj, Lucknow, Uttar Pradesh',
-        dateTime: '2024-12-14T11:00:00.000Z',
-      },
-    ],
-  },
-];
-
 
 function AssignmentCard({ selectedChannelId, dateRange }) {
   const [openAssignmentModal, setOpenAssignmentModal] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [assignments, setAssignments] = useState([]);
-
-
+  const [noAssignmentsMessage, setNoAssignmentsMessage] = useState('');
 
   const fetchChannelMembersAssignments = async () => {
     try {
@@ -182,12 +51,10 @@ function AssignmentCard({ selectedChannelId, dateRange }) {
   }, [selectedChannelId,dateRange])
 
 
+  const pendingTasks =  
 
 
-
-
-
-  // console.log('selectedAssignment',selectedAssignment)
+  console.log('assignments',assignments)
 
   const handleCardPress = (item) => {
     setSelectedAssignment(item); // Set the selected assignment

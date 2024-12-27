@@ -46,8 +46,6 @@ const UserFeed = () => {
         {/* Right Side */}
         <View style={styles.rightContainer}>
           <ImagesCollarge whichChannelIsSelected={whichChannelIsSelected} />
-          {/* <DatePickerOne whichChannelIsSelected={whichChannelIsSelected} setDate={setDate} />
-          <InsightMap setDate={setDate} /> */}
         </View>
       </View>
 

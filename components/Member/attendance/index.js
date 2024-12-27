@@ -209,15 +209,14 @@ export default LiveAttendance;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: '#f3f4f6',
-    padding: 10,
+    padding: 1,
+    // backgroundColor:"red"
   },
   headerText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#376ADA',
-    marginBottom: 10,
   },
   list: {
     paddingBottom: 20,
@@ -254,7 +253,7 @@ const styles = StyleSheet.create({
   attendanceCard: {
     backgroundColor: '#fff',
     padding: 20,
-    marginVertical: 20,
+    marginVertical: 5,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',

@@ -1,3 +1,97 @@
+  <View style={styles.searchBarWrapper}>
+        <View style={styles.searchBarContainer}>
+          <TouchableOpacity
+            onPress={toggleModal}
+            style={styles.menuIconContainer}>
+            <Icon name="user-circle-o" size={28} color="#376ADA" />
+            <Text style={{fontSize: 10, color: '#376ADA'}}>Teams</Text>
+          </TouchableOpacity>
+          <View style={styles.searchBar}>
+            <Icon
+              onPress={async () => await fetchLocalities()}
+              name="map-marker"
+              size={28}
+              color="#376ADA"
+              style={styles.iconLeft}
+            />
+            <TextInput
+              style={styles.searchInput}
+              placeholder={locationDetails?.preferredAddress}
+              placeholderTextColor="#888"
+              editable={false}
+            />
+            <Image
+              source={{
+                uri: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+              }}
+              style={styles.imageRight}
+            />
+          </View>
+        </View>
+
+        <View style={styles.placeContainer}>{/* <Places /> */}</View>
+      </View>
+
+       searchBarWrapper: {
+    position: 'absolute',
+    top: 20,
+    left: 10,
+    right: 10,
+    zIndex: 1,
+  },
+  searchBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 25,
+    paddingHorizontal: 10,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  markerText: {
+    fontSize: 15,
+    color: 'red',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 5, // Add some space between the text and the image
+  },
+  menuIconContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 25,
+    height: 50,
+    width: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 25,
+    padding: 5,
+    flex: 1,
+  },
+  iconLeft: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+  },
+  imageRight: {
+    width: 30,
+    height: 30,
+    borderRadius: 5,
+  },
+  placeContainer: {
+    marginTop: 3,
+    padding: 5,
+    borderRadius: 8,
+  },
+
 //==============action buttons=============
  
    <View style={styles.buttonContainer}>

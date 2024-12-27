@@ -8,6 +8,7 @@ import LoginScreen from './screen/Login/index';
 import SignupScreen from './screen/SignupScreen';
 import MemberDetail from './screen/MemberDetail';
 import EditProfileScreen from './screen/EditProfileScreen';
+import MapInsight from './screen/MapInsight'
 import {devURL} from './constants/endpoints';
 import {initializeSocket} from './services/socket/config';
 import UserTabNavigator from './components/Navigator/User';
@@ -83,6 +84,11 @@ export default function App() {
             <Stack.Screen
               name="MemberProfileEdit"
               component={EditProfileScreen}
+              options={{headerShown: false}}
+            />
+             <Stack.Screen
+              name="MapInsight"
+              component={MapInsight}
               options={{headerShown: false}}
             />
 

@@ -45,14 +45,17 @@ const TodayTask = () => {
     setError(null);
     try {
       const jwtToken = await AsyncStorage.getItem('token');
-      const response = await axios.get(`${devURL}/assign/location`, {
+      const response = await axios.get(`${devURL}/assignment/location`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${jwtToken}`,
         },
       });
+
       setTasks(response.data?.assignedLocations || []);
+      
     } catch (err) {
+      console.log('err aya', err)
       setError('Failed to fetch tasks.');
       Alert.alert('Error', 'Failed to fetch tasks.');
     } finally {
@@ -86,7 +89,7 @@ const TodayTask = () => {
         // Update task status to "completed" via API
         const jwtToken = await AsyncStorage.getItem('token');
         const response = await axios.patch(
-          `${devURL}/assign/location`, // Adjust the endpoint as per your API
+          `${devURL}/assignment/location`, // Adjust the endpoint as per your API
           {
             status: 'completed',
             taskId: task?._id

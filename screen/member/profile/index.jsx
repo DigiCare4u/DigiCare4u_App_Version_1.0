@@ -18,9 +18,21 @@ import { useNavigation } from '@react-navigation/native';
 import useFetchMember from '../../../hooks/useFetchMember';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ALERT_TYPE, Dialog, Toast } from 'react-native-alert-notification';
+import BackgroundActions from 'react-native-background-actions';
 
 export default function MemberProfile() {
   
+  const stopBackgroundTask = async () => {
+    try {
+      await BackgroundActions.stop();
+      await AsyncStorage.setItem('isRunning', 'false');
+      // setIsRunning(false);
+    } catch (e) {
+      console.log('stopBackgroundTask error ___',e);
+      
+      Alert.alert('Error', 'Failed to stop background task');
+    }
+  };
 
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
@@ -63,6 +75,8 @@ export default function MemberProfile() {
                 title: 'Logged Out',
                 textBody: 'You have successfully logged out.',
               });
+
+              stopBackgroundTask()
               navigation.navigate('Login');
 
             } catch (error) {

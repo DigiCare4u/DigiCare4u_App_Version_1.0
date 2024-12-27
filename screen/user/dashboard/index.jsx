@@ -15,16 +15,16 @@ export default function UserDashboard() {
         <View style={styles.ViewOne}>
           <View style={{ flex: 1 }}>
             <Header
-              onMenuPress={() => console.log('Notification')}
+              onMenuPress={() => setVisible(true)}
               onNotificationPress={() => console.log('Notification')}
             />
           </View>
           <View>
             <EmployeeCard  
-               onMemberPress = {()=>console.log('3')}
-               onActiveMemberPress = {()=>console.log('4')}
-               onAbsentMemberPress = {()=>console.log('2')}
-               onPendingMemberPress={() => setPendingModalVisible(true)}
+              //  onMemberPress = {()=>console.log('3')}
+              //  onActiveMemberPress = {()=>console.log('4')}
+              //  onAbsentMemberPress = {()=>console.log('2')}
+              //  onPendingMemberPress={() => setPendingModalVisible(true)}
                />
             <Icard />
             <AddMember/>

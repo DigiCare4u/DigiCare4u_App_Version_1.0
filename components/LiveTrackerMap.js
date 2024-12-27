@@ -99,9 +99,9 @@ const LiveTrackingMap = ({
       loc?.location?.coordinates[0],
       loc?.location?.coordinates[1],
     ]);
-  console.log('=============ggg=======================');
-  console.log(loca_);
-  console.log('====================================');
+  // console.log('=============ggg=======================');
+  // console.log(loca_);
+  // console.log('====================================');
   return (
     <View>
       <View style={styles.container}>
@@ -152,6 +152,9 @@ const LiveTrackingMap = ({
                 </MapboxGL.PointAnnotation>
               );
             })}
+
+
+            
           </MapboxGL.MapView>
         ) : null}
       </View>

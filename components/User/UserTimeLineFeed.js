@@ -22,7 +22,7 @@ const UserTimeLineFeed = ({ selectedMmeberId, selectedDate_,setTransitMemberData
         }
       );
       setTimelineData(response?.data?.data); // Set fetched data to state
-      // console.log('response?.data?.data',response?.data?.data);
+      console.log('response?.data?.data',response?.data?.data);
       
       // setTransitMemberData(response?.data?.data)
     } catch (error) {

@@ -20,16 +20,15 @@ const Details = ({ decodedToken }) => {
                 </TouchableOpacity>
               </View>
                 <Text style={styles.nameText}>{decodedToken?.data?.name}</Text>
-                <Text style={styles.employeeIdText}><Text style={styles.nameText}>Number : </Text>{decodedToken?.data?.mobile}</Text>
+                <Text style={styles.employeeIdText}>
+                    <Text style={styles.nameNumber}>Number : {decodedToken?.data?.mobile}</Text></Text>
                 <Text style={styles.nameTextz}>{decodedToken?.data?.email}</Text>
                 {/* Daity report */}
-                <View style={{ marginTop: 30 }}>
+                <View style={{ marginTop: 20 }}>
                 </View>
                 <View style={styles.headerContainer}>
                     <Text style={styles.headerText}>Running Report</Text>
-                    <TouchableOpacity style={styles.downloadButton}>
-                        <Image source={{ uri: "https://w7.pngwing.com/pngs/987/537/png-transparent-download-downloading-save-basic-user-interface-icon-thumbnail.png" }} style={{ height: 40, width: 40, borderRadius: 25, elevation: 5, marginRight: 15 }} />
-                    </TouchableOpacity>
+
                 </View>
             </View>
             {/* <MoreReport/> */}
@@ -82,12 +81,13 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
     },
     profileImage: {
-        width: 100, // Adjust size as needed
-        height: 100, // Adjust size as needed
+        width: 70, // Adjust size as needed
+        height: 70, // Adjust size as needed
         borderRadius: 50, // Make it circular
         position: "absolute", // Position it absolutely
-        left: '70%', // Center it horizontally
-        top: -45,
+        left: '80%', // Center it horizontally
+        top: -10,
+
     },
     textContainer: {
         padding: 15,
@@ -100,6 +100,11 @@ const styles = StyleSheet.create({
     },
     nameText: {
         fontSize: 15,
+        fontWeight: 'bold',
+        color: "#376ADA",
+    },
+    nameNumber:{
+        fontSize: 14,
         fontWeight: 'bold',
         color: "#376ADA",
     },

@@ -23,9 +23,6 @@ const MembersTeamList = ({fetchLocalities}) => {
         },
       });
 
-      // console.log('=====memberList=====')
-      // console.log(response?.data?.team[0].name)
-
       setMemberTeams(response?.data?.team || []);
     } catch (error) {
       console.error(error);
@@ -43,6 +40,7 @@ const MembersTeamList = ({fetchLocalities}) => {
   );
 
   const renderMemberItem = ({ item }) => (
+
     <View style={styles.memberCard}>
 
       <TouchableOpacity onPress={() => navigation.navigate('MemberDetail', { memberId: item._id })}>
@@ -51,9 +49,6 @@ const MembersTeamList = ({fetchLocalities}) => {
             source={{ uri: item.imageUrl || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' }}
             style={styles.memberImage}
           />
-
-
-
           <View style={styles.memberInfo}>
             <Text style={styles.memberName}>{item.name}</Text>
             <Text style={styles.memberType}>Role : <Text>{item.groupType}</Text></Text>

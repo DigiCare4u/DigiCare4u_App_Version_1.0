@@ -114,9 +114,7 @@ const useFetchMember = (memberId) => {
       });
 
       // console.log('=====memberData[usefetchMember]========')
-      console.log('hook========',response?.data.locations
-         
-      ); 
+      // console.log('hook========',response?.data.locations; 
       setRecords(response?.data?.locations);
     } catch (err) {
       setError(err.message || "Failed to fetch records");

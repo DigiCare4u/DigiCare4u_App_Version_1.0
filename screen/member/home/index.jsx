@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   SafeAreaView,
   View,
+  Text,
   TextInput,
   StyleSheet,
   Image,
@@ -11,23 +12,24 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome';
 import TeamMembersModel from '../../../components/Modal/MembersTeamsModel';
 import Places from '../../../components/places';
-import Mapbox, { MapView, Camera, MarkerView } from '@rnmapbox/maps';
+import Mapbox, {MapView, Camera, MarkerView} from '@rnmapbox/maps';
+// import MapView, { Marker } from 'react-native-maps';
 import useLocation from '../../../hooks/useLocation';
 import Loader from '../../../components/Loader';
 import useFetchMember from '../../../hooks/useFetchMember';
 import axios from 'axios';
-import { useSocket } from '../../../context/socket';
-import { onEvent } from '../../../services/socket/config';
-import { SOSAlert } from '../../../notificationTemplates/SOSAlert';
+// import {useSocket} from '../../../context/socket';
+// import {onEvent} from '../../../services/socket/config';
+// import {SOSAlert} from '../../../notificationTemplates/SOSAlert';
 import {
   formatDistance,
   formatDuration,
   getDistanceFromLatLonInMeters,
 } from '../../../services/util/distanceMatrix';
-import { devURL, mapBoxAccessToken } from '../../../constants/endpoints';
-import { updateLocationOnDisplacement } from '../../../services/coreTracking';
+import {devURL, mapBoxAccessToken} from '../../../constants/endpoints';
+import {updateLocationOnDisplacement} from '../services/coreTracking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getAddressFromCoordinates_v1 } from '../../../services/util/geoCoding';
+import {getAddressFromCoordinates_v1} from '../../../services/util/geoCoding';
 // import MySvgComponent from "../SVGmarker";
 
 // const { socket } = useSocket;
@@ -122,7 +124,7 @@ export default function MemberHome() {
 
   //======================================
 
-  const { fetchTeamMembers, teamMember, memberProfile, fetchMemberProfile } =
+  const {fetchTeamMembers, teamMember, memberProfile, fetchMemberProfile} =
     useFetchMember();
 
   const [teamData, setTeamData] = useState([]);
@@ -138,7 +140,7 @@ export default function MemberHome() {
 
     const localityPromises = teamMember?.map(async member => {
       try {
-        const { coordinates } = member?.location || {};
+        const {coordinates} = member?.location || {};
         if (!coordinates) throw new Error('Missing coordinates');
 
         const [latitude, longitude] = coordinates;
@@ -164,7 +166,7 @@ export default function MemberHome() {
         // let address = response?.data?.features[0]?.properties?.context?.locality?.name
         let duration = response_1?.data?.routes[0]?.duration;
         let distance = response_1?.data?.routes[0]?.distance;
-        let eta = { distance, duration };
+        let eta = {distance, duration};
         // console.log('eta ----', eta);
 
         data.push({
@@ -186,7 +188,7 @@ export default function MemberHome() {
     // setIsFetching(false);
   };
 
-  const { location, getCurrentLocation } = useLocation();
+  const {location, getCurrentLocation} = useLocation();
 
   const [isModalVisible, setModalVisible] = useState(false);
   const mapRef = useRef(null);
@@ -199,10 +201,10 @@ export default function MemberHome() {
   }, [getCurrentLocation, location]);
 
   useEffect(() => {
-    if (!teamData) {
+    if (teamMember?.length && !teamData?.length) {
       fetchLocalities();
     }
-  }, [fetchLocalities, teamData]);
+  }, [teamMember, teamData]);
 
   useEffect(() => {
     if (location) {
@@ -240,8 +242,6 @@ export default function MemberHome() {
   const [eta, setETA] = useState(null);
 
   const getMemberLiveETA = async () => {
-
-
     const eta = await getDistanceFromLatLonInMeters(
       memberLastLocationCooridnates[0],
       memberLastLocationCooridnates[1],
@@ -252,32 +252,44 @@ export default function MemberHome() {
     setETA(eta);
     if (eta < 21000000000000000000000000005) {
       try {
-
         //===========================================
 
-
-        const geoCoded = await getAddressFromCoordinates_v1([location?.latitude,location?.longitude])
-
+        const geoCoded = await getAddressFromCoordinates_v1([
+          location?.latitude,
+          location?.longitude,
+        ]);
 
         let locationDetails = {
-          preferredAddress: geoCoded.data?.features[0]?.properties?.name_preferred || null,
-          address: geoCoded.data?.features[0]?.properties?.place_formatted || null,
-          locality: geoCoded.data?.features[0]?.properties?.context?.locality?.name || null,
-      
-          street: geoCoded.data?.features[0]?.properties?.context?.street?.name || null,
-      
-          neighborhood: geoCoded.data?.features[0]?.properties?.context?.neighborhood?.name || 'Not Found',
-          region: geoCoded.data?.features[0]?.properties?.context?.region?.name || null,
-          district: geoCoded.data?.features[0]?.properties?.context?.district?.name || null,
-          country: geoCoded.data?.features[0]?.properties?.context?.country?.name || null,
-          postcode: geoCoded.data?.features[0]?.properties?.context?.postcode?.name || null,
+          preferredAddress:
+            geoCoded.data?.features[0]?.properties?.name_preferred || null,
+          address:
+            geoCoded.data?.features[0]?.properties?.place_formatted || null,
+          locality:
+            geoCoded.data?.features[0]?.properties?.context?.locality?.name ||
+            null,
+
+          street:
+            geoCoded.data?.features[0]?.properties?.context?.street?.name ||
+            null,
+
+          neighborhood:
+            geoCoded.data?.features[0]?.properties?.context?.neighborhood
+              ?.name || 'Not Found',
+          region:
+            geoCoded.data?.features[0]?.properties?.context?.region?.name ||
+            null,
+          district:
+            geoCoded.data?.features[0]?.properties?.context?.district?.name ||
+            null,
+          country:
+            geoCoded.data?.features[0]?.properties?.context?.country?.name ||
+            null,
+          postcode:
+            geoCoded.data?.features[0]?.properties?.context?.postcode?.name ||
+            null,
         };
-      
-
-
 
         //===========================================
-
 
         const jwtToken = await AsyncStorage.getItem('token');
 
@@ -295,7 +307,11 @@ export default function MemberHome() {
             },
           },
         );
-        console.log('API Response:', response.status);
+        console.log('API Response_________:', response.status, {
+          latitude: location?.latitude,
+          longitude: location?.longitude,
+          locationDetails,
+        });
       } catch (error) {
         console.error(
           'API Error:',
@@ -315,10 +331,10 @@ export default function MemberHome() {
 
   console.log('eta___', eta);
 
-  onEvent(`SOS_member_${id_}`, data => {
-    console.log(data);
-    SOSAlert(data);
-  });
+  // onEvent(`SOS_member_${id_}`, data => {
+  //   console.log(data);
+  //   SOSAlert(data);
+  // });
   //=============================================
 
   //=============================================
@@ -361,13 +377,37 @@ export default function MemberHome() {
                 <View
                 // style={styles.markerInfo}
                 >
-                  <Button
+                  {/* <Button
                     style={styles.markerTitle}
                     title={`Name : ${member?.name} 
 Address : ${member?.currentLocality} 
 Total Distance : ${formatDistance(member?.eta?.distance)}, 
 Total Time : ${formatDuration(member?.eta?.duration)}`}
-                  />
+                  /> */}
+                  <View
+                    style={{
+                      backgroundColor: '#fff',
+                      padding: 10,
+                      borderRadius: 10,
+                    }}
+                    onPress={() => {
+                      console.log('Marker pressed:', member?.name);
+                    }}>
+                    <Text style={{color: 'blue'}}>
+                      {`Name: ${member?.name}\nAddress: ${
+                        member?.currentLocality
+                      }\nTotal Distance: ${formatDistance(
+                        member?.eta?.distance,
+                      )}\nTotal Time: ${formatDuration(member?.eta?.duration)}`}
+                    </Text>
+                    {/* <TouchableOpacity
+                    onPress={()=>console.log('clicked')}
+                    >
+                      <View style={{backgroundColor:"blue", padding:5, borderRadius:10,marginTop:5}}>
+                        <Text style={{textAlign:"center"}}>View Assignment</Text>
+                      </View>
+                    </TouchableOpacity> */}
+                  </View>
                 </View>
                 <View style={styles.customMarker}>
                   {/* <MySvgComponent /> */}
@@ -391,7 +431,8 @@ Total Time : ${formatDuration(member?.eta?.duration)}`}
           <TouchableOpacity
             onPress={toggleModal}
             style={styles.menuIconContainer}>
-            <Icon name="bars" size={28} color="#376ADA" />
+            <Icon name="user-circle-o" size={28} color="#376ADA" />
+            <Text style={{fontSize: 10, color: '#376ADA'}}>Teams</Text>
           </TouchableOpacity>
           <View style={styles.searchBar}>
             <Icon
@@ -405,22 +446,18 @@ Total Time : ${formatDuration(member?.eta?.duration)}`}
               style={styles.searchInput}
               placeholder={locationDetails?.preferredAddress}
               placeholderTextColor="#888"
+              editable={false}
             />
             <Image
-              source={{ uri: 'https://via.placeholder.com/30' }}
+              source={{
+                uri: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+              }}
               style={styles.imageRight}
             />
           </View>
         </View>
 
-        <View style={styles.placeContainer}>
-          <Places />
-          <TouchableOpacity
-            style={styles.memberButton}
-            onPress={async () => await fetchLocalities()}>
-            <Icon name="user" size={28} color="#376ADA" />
-          </TouchableOpacity>
-        </View>
+        <View style={styles.placeContainer}>{/* <Places /> */}</View>
       </View>
       {/* Modal for team members */}
 
@@ -469,7 +506,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     elevation: 5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
@@ -541,12 +578,12 @@ const styles = StyleSheet.create({
     height: 50,
     width: 50,
     shadowColor: '#376ADA',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.3,
     elevation: 2,
     position: 'absolute', // Use absolute positioning to place the button
     right: 7, // Adjust right position
-    top: 48, // Adjust top position
+    top: 8, // Adjust top position
   },
   memberText: {
     color: 'black', // Ensure text color contrasts the button background

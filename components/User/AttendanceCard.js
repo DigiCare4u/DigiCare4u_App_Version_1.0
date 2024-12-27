@@ -106,82 +106,6 @@ const AttendanceList = ({ selectedChannelId, dateRange }) => {
     }
   }, [attendanceRecords]);
 
-  // const renderItem = ({ item }) => {
-  //   const getButtonText = status => {
-  //     if (status === 'in-progress') {
-  //       return 'Present';
-  //     } else if (status === 'absent') {
-  //       return 'Absent';
-  //     } else {
-  //       return 'Not Marked';
-  //     }
-  //   };
-
-  //   const getButtonStyle = status => {
-  //     if (status === 'in-progress') {
-  //       return styles.presentButton;
-  //     } else if (status === 'absent') {
-  //       return styles.absentButton;
-  //     } else {
-  //       return styles.notMarkedButton;
-  //     }
-  //   };
-
-  //   return (
-  //     <View style={styles.card}>
-  //       <View style={styles.infoContainer}>
-  //         <Text style={styles.name}>{item.name}</Text>
-  //         {item.locationDuringPunchIn?.latitude ? (
-  //           <View style={styles.locationRow}>
-  //             <Icon name="location-on" size={16} color="green" />
-  //             <Text style={styles.location}>
-  //               {addresses[item.id] || 'Loading address...'}
-  //             </Text>
-  //           </View>
-  //         ) : (
-  //           <Text style={styles.location}>No location recorded</Text>
-  //         )}
-  //       </View>
-
-  //       <View style={styles.actionContainer}>
-  //         <TouchableOpacity
-  //           onPress={() => setOpenCalenderModal(true)}
-  //           style={[styles.button, getButtonStyle(item.status)]}>
-  //           <Text style={styles.buttonText}>{getButtonText(item.status)}</Text>
-  //         </TouchableOpacity>
-  //         {item.punchInTime ? (
-  //           <View>
-  //             {/* Date */}
-  //             <Text style={styles.date}>
-  //               {new Date(item.punchInTime).toLocaleDateString('en-US', {
-  //                 weekday: 'short',
-  //                 year: 'numeric',
-  //                 month: 'short',
-  //                 day: 'numeric',
-  //               })}
-  //             </Text>
-
-  //             {/* Time */}
-  //             <Text style={styles.date}>
-  //               {new Date(item.punchInTime).toLocaleTimeString('en-US', {
-  //                 hour: 'numeric',
-  //                 minute: 'numeric',
-  //                 hour12: true,
-  //               })}
-  //             </Text>
-  //           </View>
-  //         ) : (
-  //           <Text style={styles.location}>No Time Found</Text>
-  //         )}
-  //       </View>
-  //     </View>
-  //   );
-  // };
-
-
-
-  // console.log('attendanceRecords',attendanceRecords[0]);
-
 
   const renderItem = ({ item }) => {
     // console.log(item.name);
@@ -236,12 +160,6 @@ const AttendanceList = ({ selectedChannelId, dateRange }) => {
         dateRange={dateRange}
         selectedChannelId={selectedChannelId}
       />
-
-      {/* <UserCalender
-        openCalenderModalData={openCalenderModalData}
-        visible={openCalenderModal}
-        setVisible={setOpenCalenderModal}
-      /> */}
 
       <Calender_new
         openCalenderModalData={openCalenderModalData}

@@ -33,14 +33,12 @@ const ImagesCollarge = ({whichChannelIsSelected}) => {
   const {fetchChannelMember, channelMemberList} = useUserFetchChannel();
   const [loading, setLoading] = useState(true);
 
-  // console.log('whichChannelIsSelected',whichChannelIsSelected)
-  // console.log('selectedChannel',selectedChannel)
 
   useEffect(() => {
     const membersLoad = async () => {
       setLoading(true); // Start loading
-      await fetchChannelMember(whichChannelIsSelected); // Wait for the fetch to complete
-      setLoading(false); // Stop loading after data is fetched
+      await fetchChannelMember(whichChannelIsSelected); 
+      setLoading(false); 
     };
     membersLoad();
   }, [whichChannelIsSelected]);

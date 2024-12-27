@@ -1,32 +1,48 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
-import { useDecodedToken } from '../../../hooks/useDecoded';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Linking,
+} from 'react-native';
+import {useDecodedToken} from '../../../hooks/useDecoded';
 import Details from '../../../components/Details';
 import TodayTask from '../../../components/TodayTask';
 import Header from '../../../components/Header';
 import useLocation from '../../../hooks/useLocation';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { PERMISSIONS, check, request, openSettings } from 'react-native-permissions';
-import Bg_for_v1 from '../../../services/Bg_for_v1_OG';
+import {
+  PERMISSIONS,
+  check,
+  request,
+  openSettings,
+} from 'react-native-permissions';
+import Bg_for_v1 from '../../../services/Bg_for_v1';
 import LiveAttendance from '../../../components/Member/attendance';
 import InsightTwo from '../../../components/Member/Channel/MemberInsightTwo';
 
-const MemberDashboard = ({ navigation }) => {
-  const { location, getCurrentLocation } = useLocation();
+const MemberDashboard = ({navigation}) => {
+  const {location, getCurrentLocation} = useLocation();
   const [isBgAccess, setIsBgAccess] = useState(false);
 
   useEffect(() => {
     checkBackgroundAccess();
-  }, []);
-
+  }, [isBgAccess]);
+  // console.log('=========cisBgAccess===========================');
+  // console.log(isBgAccess);
+  // console.log('====================================');
 
   const checkBackgroundAccess = async () => {
     try {
-      const status = await check(PERMISSIONS.ANDROID.ACCESS_BACKGROUND_LOCATION);
+      const status = await check(
+        PERMISSIONS.ANDROID.ACCESS_BACKGROUND_LOCATION,
+      );
       if (status === 'granted') {
         setIsBgAccess(true);
       } else if (status === 'denied') {
-        requestBackgroundAccess();
+        // requestBackgroundAccess();
       } else {
         setIsBgAccess(false);
       }
@@ -37,7 +53,9 @@ const MemberDashboard = ({ navigation }) => {
 
   const requestBackgroundAccess = async () => {
     try {
-      const status = await request(PERMISSIONS.ANDROID.ACCESS_BACKGROUND_LOCATION);
+      const status = await request(
+        PERMISSIONS.ANDROID.ACCESS_BACKGROUND_LOCATION,
+      );
       if (status === 'granted') {
         setIsBgAccess(true);
       } else {
@@ -65,19 +83,17 @@ const MemberDashboard = ({ navigation }) => {
           ) : (
             <>
               <Icon name="warning" size={24} color="yellow" />
-              <TouchableOpacity onPress={navigateToSettings} style={styles.button}>
+              <TouchableOpacity
+                onPress={navigateToSettings}
+                style={styles.button}>
                 <Text style={styles.buttonText}>Enable</Text>
               </TouchableOpacity>
             </>
           )}
         </View>
-        <View style={{ marginTop: 10 }}>
-          <TodayTask />
+        <View style={{marginTop: 10}}>
           <LiveAttendance />
-          {/* <SimpleAction /> */}
-          <Bg_for_v1
-            isBgAccess={isBgAccess}
-          />
+          <Bg_for_v1 isBgAccess={isBgAccess} />
           <Details decodedToken={useDecodedToken().decodedToken} />
         </View>
       </ScrollView>
@@ -99,7 +115,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,

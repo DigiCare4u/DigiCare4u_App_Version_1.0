@@ -14,12 +14,8 @@ import Mapbox, {MapView, Camera, MarkerView} from '@rnmapbox/maps';
 import useLocation from '../../../hooks/useLocation';
 import Loader from '../../../components/Loader';
 import useFetchUser from '../../../hooks/useFetchUser';
-import {Text} from 'react-native-svg';
 import axios from 'axios';
 import UserMembersModal from '../../../components/Modal/UsersMemberModel';
-import notifee, {AndroidImportance} from '@notifee/react-native';
-import {useSocket} from '../../../context/socket';
-import useNotification from '../../../hooks/useNotification';
 import {onEvent} from '../../../services/socket/config';
 import {MemberVerifiedNotification} from '../../../notificationTemplates/memberVerified';
 
@@ -246,10 +242,10 @@ export default function UserHome() {
   }, [getCurrentLocation, location]);
 
   useEffect(() => {
-    if (!teamData) {
+    if (userMembersList?.length && !teamData?.length) {
       fetchLocalities();
     }
-  }, [fetchLocalities, teamData]);
+  }, [userMembersList, teamData]);
 
   useEffect(() => {
     if (location) {
@@ -272,7 +268,7 @@ export default function UserHome() {
     setModalVisible(!isModalVisible);
   };
 
-  console.log('location========',location)
+  console.log('teamData========', teamData[0]?.name);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -299,8 +295,6 @@ export default function UserHome() {
 
           {/* Render markers for user members */}
           {teamData?.map((member, index) => {
-            // console.log('_______________teams : ', member?.eta);
-            // const currentLocality = await getAddressFromCoordinates_teams([member?.location.coordinates[1],member?.location.coordinates[0]])
             return (
               <MarkerView
                 draggable={true}
@@ -314,10 +308,11 @@ export default function UserHome() {
                 <View style={styles.markerTitle}>
                   <Button
                     style={styles.markerTitle}
-                    title={`${member?.name}
-Address-: ${member?.currentLocality} 
-Total Distance-: ${formatDistance(member?.eta?.distance)},
-Total KiloMeter-: ${formatDuration(member?.eta?.duration)}`}
+                    title={`Name: ${member?.name}\nAddress: ${
+                      member?.currentLocality
+                    }\nDistance: ${formatDistance(
+                      member?.eta?.distance,
+                    )}\nDuration: ${formatDuration(member?.eta?.duration)}`}
                   />
                 </View>
                 <View style={styles.customMarker}>
@@ -358,22 +353,15 @@ Total KiloMeter-: ${formatDuration(member?.eta?.duration)}`}
               style={styles.searchInput}
               placeholder={locationDetails?.preferredAddress}
               placeholderTextColor="#888"
+              editable={false}
             />
             <Image
-              source={{uri: 'https://via.placeholder.com/30'}}
+              source={{
+                uri: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+              }}
               style={styles.imageRight}
             />
           </View>
-        </View>
-
-        <View style={styles.placeContainer}>
-          <Places />
-          <TouchableOpacity
-            style={styles.memberButton}
-            onPress={async () => await fetchLocalities()}>
-            <Text style={styles.memberText}>Show Member</Text>
-            <Icon name="user" size={28} color="#376ADA" />
-          </TouchableOpacity>
         </View>
       </View>
       {/* Modal for team members */}
@@ -496,7 +484,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     position: 'absolute', // Use absolute positioning to place the button
     right: 7, // Adjust right position
-    top: 48, // Adjust top position
+    top: 8, // Adjust top position
   },
   notifeeButton: {
     flexDirection: 'row',
