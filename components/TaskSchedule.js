@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -12,29 +12,28 @@ import {
 } from 'react-native';
 import useFetchUser from '../hooks/useFetchUser';
 import MapSchedule from './MapSchedule';
-import {devURL} from '../constants/endpoints';
+import { devURL } from '../constants/endpoints';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import DateAndTimePicker from './TimeAndDatePicker';
 
 const TaskSchedule = () => {
+  const [eventName, setEventName] = useState('');
+
   const [selectedLocation, setSelectedLocationForAPI] = useState(null);
 
   const [query, setQuery] = useState('');
-  const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [date, setDate] = useState(new Date);
+  const [time, setTime] = useState();
 
-  const {fetchUserMembersList, userMembersList} = useFetchUser();
+  const { fetchUserMembersList, userMembersList } = useFetchUser();
   const [selectedMemberId, setSelectedMemberId] = useState(null);
 
   useEffect(() => {
     fetchUserMembersList();
   }, []);
 
-  const showPicker = () => {
-    setShowDatePicker(true);
-  };
+
 
   const handleSelectMember = id => {
     setSelectedMemberId(id);
@@ -61,14 +60,17 @@ const TaskSchedule = () => {
       const payload = {
         locationName: query,
         memberId: selectedMemberId,
-        date: date.toISOString(),
+        dateTime: {
+          date, time
+        },
         coordinates: {
           lat: selectedLocation?.latitude,
           lng: selectedLocation?.longitude,
         },
+        eventName:eventName
       };
 
-      console.log('Sending Payload:', payload);
+      console.log('Sending Payload:', date, time);
 
       // Get the JWT token from AsyncStorage
       const jwtToken = await AsyncStorage.getItem('token');
@@ -93,7 +95,7 @@ const TaskSchedule = () => {
         response.data.message || 'Schedule assigned successfully',
       );
     } catch (error) {
-      console.log('error ___________',error);
+      console.log('error ___________', error);
       Alert.alert(
         'Success',
         error || 'Schedule assigned successfully',
@@ -115,6 +117,22 @@ const TaskSchedule = () => {
         Task Schedule
       </Text>
 
+      <Text
+        style={{
+          color: 'gray',
+          fontSize: 16,
+          fontWeight: '600',
+          marginVertical: 10,
+        }}>
+        Event Name
+      </Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Enter Event Name"
+        onChangeText={(event)=>setEventName(event)}
+        value={eventName}
+      />
       {/* Map Section */}
       <View style={styles.mapContainer}>
         <MapSchedule
@@ -127,7 +145,7 @@ const TaskSchedule = () => {
       <View style={styles.teamContainer}>
         <FlatList
           data={userMembersList}
-          renderItem={({item}) => {
+          renderItem={({ item }) => {
             return (
               <TouchableOpacity
                 onPress={() => handleSelectMember(item._id)}
@@ -152,7 +170,10 @@ const TaskSchedule = () => {
           showsHorizontalScrollIndicator={false}
         />
       </View>
-      <DateAndTimePicker />
+
+
+
+      <DateAndTimePicker setTime={setTime} setDate={setDate} />
 
       <View style={styles.bottomSection}>
         <View style={styles.buttonContainer}>
@@ -186,7 +207,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 5,
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     elevation: 3,
     borderRadius: 10,
     marginBottom: 15,
@@ -235,9 +256,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     shadowColor: '#376ADA',
     shadowOpacity: 0.3,
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     elevation: 4,
     shadowRadius: 20,
     marginBottom: 10,
+  },
+  input: {
+    height: 40,
+    // borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 10,
+    paddingHorizontal: 8,
+    borderRadius: 5,
   },
 });

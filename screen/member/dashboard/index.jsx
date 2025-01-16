@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Linking,
 } from 'react-native';
-import {useDecodedToken} from '../../../hooks/useDecoded';
+import { useDecodedToken } from '../../../hooks/useDecoded';
 import Details from '../../../components/Details';
 import TodayTask from '../../../components/TodayTask';
 import Header from '../../../components/Header';
@@ -22,10 +22,17 @@ import {
 import Bg_for_v1 from '../../../services/Bg_for_v1';
 import LiveAttendance from '../../../components/Member/attendance';
 import InsightTwo from '../../../components/Member/Channel/MemberInsightTwo';
+import LiveLocationScreen from '../../../services/LiveLocation';
+import Loader from '../../components/Loader';
 
-const MemberDashboard = ({navigation}) => {
-  const {location, getCurrentLocation} = useLocation();
+const MemberDashboard = ({ navigation }) => {
+  const { location, getCurrentLocation } = useLocation();
   const [isBgAccess, setIsBgAccess] = useState(false);
+  useEffect(() => {
+    if (!location) {
+      getCurrentLocation();
+    }
+  }, [getCurrentLocation]);
 
   useEffect(() => {
     checkBackgroundAccess();
@@ -75,6 +82,10 @@ const MemberDashboard = ({navigation}) => {
   return (
     <View style={styles.mainContainer}>
       <ScrollView>
+        {location ? (
+          <LiveLocationScreen location={location} />
+
+        ) : <Loader />}
         {/* <Header /> */}
         <View style={styles.container}>
           <Text style={styles.text}>Background Access</Text>
@@ -91,10 +102,11 @@ const MemberDashboard = ({navigation}) => {
             </>
           )}
         </View>
-        <View style={{marginTop: 10}}>
+
+        <Details decodedToken={useDecodedToken().decodedToken} />
+        {/* <Bg_for_v1 isBgAccess={isBgAccess} /> */}
+        <View style={{ marginTop: 10 }}>
           <LiveAttendance />
-          <Bg_for_v1 isBgAccess={isBgAccess} />
-          <Details decodedToken={useDecodedToken().decodedToken} />
         </View>
       </ScrollView>
     </View>
@@ -115,7 +127,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,

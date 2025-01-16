@@ -20,44 +20,10 @@ import TodayAttendance from '../../../components/User/LiveAttendance';
 import AssignmentAndAttendance from '../../../components/User/AssignmentAndAttendance';
 
 const MemberList = () => {
-  const [memberLists, setMemberList] = useState([]);
-  const [searchInput, setSearchInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const navigation = useNavigation();
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const fetchMemberList = async () => {
-    try {
-      setLoading(true);
-      const jwtToken = await AsyncStorage.getItem('token');
-      const response = await axios.get(`${devURL}/user/members/list`, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${jwtToken}`,
-        },
-      });
-
-      // console.log('Fetched Members:', response.data);
-      setMemberList(response.data.members);
-    } catch (error) {
-      console.error('Error fetching member list:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchMemberList();
-  }, []);
-
-  if (loading) {
-    return (
-      <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#007ACC" />
-      </View>
-    );
-  }
-
+ 
   return (
      <ScrollView style={styles.container}>
       <View style={styles.headerContainer}>
@@ -66,9 +32,9 @@ const MemberList = () => {
       
         <AssignmentAndAttendance />
 
-      {/* <TouchableOpacity onPress={()=>setIsModalOpen(true)} style={styles.button}>
+      <TouchableOpacity onPress={()=>setIsModalOpen(true)} style={styles.button}>
           <Text style={styles.buttonText}>View Attandance</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
 
       {/* MODEL Attendance */}
       <TodayAttendance visible={isModalOpen} setVisible={setIsModalOpen} />
@@ -183,6 +149,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
+    marginBottom:50
   },
   buttonText: {color: 'white', fontWeight: 'bold'},
 });

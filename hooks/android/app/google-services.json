@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1097500809716",
+    "project_id": "digicare4u-79caf",
+    "storage_bucket": "digicare4u-79caf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1097500809716:android:b861f38fe431f7e3f201a1",
+        "android_client_info": {
+          "package_name": "com.digicare"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWIuJ2L47wADLtY7HHntwgzDdz-8nR-lo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

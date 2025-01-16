@@ -20,12 +20,12 @@ export default function UserDashboard() {
             />
           </View>
           <View>
-            <EmployeeCard  
+            {/* <EmployeeCard  
               //  onMemberPress = {()=>console.log('3')}
               //  onActiveMemberPress = {()=>console.log('4')}
               //  onAbsentMemberPress = {()=>console.log('2')}
               //  onPendingMemberPress={() => setPendingModalVisible(true)}
-               />
+               /> */}
             <Icard />
             <AddMember/>
           </View>

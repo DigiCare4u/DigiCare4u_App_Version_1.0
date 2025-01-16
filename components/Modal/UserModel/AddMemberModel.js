@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,32 +6,34 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
+  Alert,
 } from 'react-native';
-import {ALERT_TYPE, Dialog, Toast} from 'react-native-alert-notification';
+import { ALERT_TYPE, Dialog, Toast } from 'react-native-alert-notification';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {devURL} from '../../../constants/endpoints';
+import { devURL } from '../../../constants/endpoints';
 import Modal from 'react-native-modal';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import useUserFetchChannel from '../../../hooks/useUserFetchChannel';
 import AddChannelModal from './AddChannelModal';
 import AddChannelAccordian from './AddChannelAccordian';
 
-const AddMemberModel = ({visible, setVisible}) => {
+const AddMemberModel = ({ visible, setVisible }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [number, setNumber] = useState('');
-  const [groupType, setGroupType] = useState('');
+  const [channelId, setChannelId] = useState('');
+  const [channelName, setChannelName] = useState('');
   const [loading, setLoading] = useState(false);
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
   //====== Status and Function =========
-  const {channels, fetchChannels} = useUserFetchChannel();
+  const { channels, fetchChannels } = useUserFetchChannel();
 
   useEffect(() => {
     fetchChannels();
   }, []);
 
-  const isButtonDisabled = !name || !number || !email || !groupType;
+  const isButtonDisabled = !name || !number || !email || !channelId;
 
   const handleAddMember = async () => {
     if (isButtonDisabled) {
@@ -39,7 +41,7 @@ const AddMemberModel = ({visible, setVisible}) => {
         type: ALERT_TYPE.WARNING,
         title: 'Validation Error',
         textBody: 'Please fill in all fields.',
-        button: 'close',
+        button: 'Close',
       });
       return;
     }
@@ -49,8 +51,17 @@ const AddMemberModel = ({visible, setVisible}) => {
     try {
       const token = await AsyncStorage.getItem('token');
       if (!token) {
-        throw new Error('Authentication token not found');
+        throw new Error('Authentication token not found.');
       }
+
+      const requestBody = [
+        {
+          name,
+          email,
+          mobile: number, // Use descriptive naming if "number" is a phone number
+          channelId,
+        },
+      ];
 
       const response = await fetch(`${devURL}/user/members`, {
         method: 'POST',
@@ -58,61 +69,54 @@ const AddMemberModel = ({visible, setVisible}) => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify([
-          {
-            name,
-            email,
-            mobile: number,
-            groupType,
-          },
-        ]),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
+      console.log('datadatadata-------', data);
 
       if (response.ok) {
-        Toast.show({
-          type: ALERT_TYPE.SUCCESS,
-          title: 'Success',
-          textBody: `Member "${name}" added successfully!`,
-        });
+        Alert.alert('Member Added!', `Member "${name}" added successfully!`);
 
+        // Reset form fields
         setName('');
         setEmail('');
         setNumber('');
-        setGroupType('');
+        setChannelId('');
+        setChannelName('');
         setDropdownVisible(false);
         setVisible(false); // Close the modal
       } else {
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: 'Add Member Failed',
-          textBody: data.message || 'Failed to add member.',
-          button: 'close',
-        });
+        Alert.alert('Already Registered !', data?.message);
+
       }
     } catch (error) {
       Dialog.show({
         type: ALERT_TYPE.DANGER,
         title: 'Error',
-        textBody: error.message || 'An unexpected error occurred.',
-        button: 'close',
+        textBody: error.message || 'An unexpected error occurred. Please try again later.',
+        button: 'Close',
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const renderChannelOption = ({item}) => (
-    <TouchableOpacity
-      style={styles.option}
-      onPress={() => {
-        setGroupType(item.name); // Use the channel name as the selected group type
-        setDropdownVisible(false);
-      }}>
-      <Text style={styles.optionText}>{item.name}</Text>
-    </TouchableOpacity>
-  );
+  const renderChannelOption = ({ item }) => {
+
+    return (
+      <TouchableOpacity
+        style={styles.option}
+        onPress={() => {
+
+          setChannelName(item.name); // Use the channel name as the selected group type
+          setChannelId(item._id); // Use the channel name as the selected group type
+          setDropdownVisible(false);
+        }}>
+        <Text style={styles.optionText}>{item.name}</Text>
+      </TouchableOpacity>
+    )
+  };
 
   return (
     <Modal
@@ -125,7 +129,7 @@ const AddMemberModel = ({visible, setVisible}) => {
       <View style={styles.modalContainer}>
         <Text style={styles.title}>
           <FontAwesomeIcon name="user" size={30} color="#376ADA" />
-          <Text style={{margin: 15, color: '#376ADA'}}>Add New Member</Text>
+          <Text style={{ margin: 15, color: '#376ADA' }}>Ad1d New Member</Text>
         </Text>
         <View>
           <Text style={styles.label}>Name</Text>
@@ -168,7 +172,7 @@ const AddMemberModel = ({visible, setVisible}) => {
             style={styles.dropdown}
             onPress={() => setDropdownVisible(true)}>
             <Text style={styles.dropdownText}>
-              {groupType || 'Select Channel'}
+              {channelName || 'Select Channel'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -192,11 +196,11 @@ const AddMemberModel = ({visible, setVisible}) => {
           onBackdropPress={() => setDropdownVisible(false)}
           style={styles.dropdownModal}>
           <View style={styles.dropdownContainer}>
-          <FlatList
-                data={channels}
-                renderItem={renderChannelOption}
-                keyExtractor={item => item._id}
-              />
+            <FlatList
+              data={channels}
+              renderItem={renderChannelOption}
+              keyExtractor={item => item._id}
+            />
           </View>
         </Modal>
       </View>

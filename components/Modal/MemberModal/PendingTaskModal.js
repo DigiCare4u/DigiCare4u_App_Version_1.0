@@ -1,24 +1,24 @@
 import React from 'react';
-import {View, Text, TouchableOpacity, StyleSheet, FlatList} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 import Modal from 'react-native-modal';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import moment from 'moment';
 import MapView, { Marker } from 'react-native-maps';
 
-function PendingTaskModal({visible, setVisible, selectedPendingTasks}) {
+function PendingTaskModal({ visible, setVisible, selectedPendingTasks }) {
   const navigation = useNavigation();
 
   // console.log('selectedPendingTasks', selectedPendingTasks);
 
-  const renderTaskItem = ({item}) => {
-    const formattedDateTime = moment(item.dateTime).format('ddd, DD hh:mm A');
-    const {lat, lng} = item.location;
+  const renderTaskItem = ({ item }) => {
+    const formattedDateTime = moment(item.date).format('ddd, DD');
+    const { lat, lng } = item.location;
 
     return (
       <TouchableOpacity
         onPress={() =>
-          navigation.navigate('MapInsight', {memberId: item.taskId})
+          navigation.navigate('MemberAssignmentMap', { taskId: item.taskId })
         }>
         <View style={styles.taskCard}>
           <View style={styles.mapContainer}>
@@ -31,7 +31,7 @@ function PendingTaskModal({visible, setVisible, selectedPendingTasks}) {
                 longitudeDelta: 0.01, // Zoom level
               }}>
               <Marker
-                coordinate={{latitude: lat, longitude: lng}}
+                coordinate={{ latitude: lat, longitude: lng }}
                 title="Location"
                 description={`Lat: ${lat.toFixed(2)}, Lng: ${lng.toFixed(2)}`}
               />
@@ -39,7 +39,7 @@ function PendingTaskModal({visible, setVisible, selectedPendingTasks}) {
           </View>
           <View>
             <Text style={styles.taskName}>
-              {item?.task?.location || 'Test location'}
+            {item?.eventName || 'event name n/a '}
             </Text>
             {/* <Text style={styles.taskLocation}>
                 Location: Lat {item.location.lat.toFixed(2)}, Lng{' '}
@@ -52,12 +52,22 @@ function PendingTaskModal({visible, setVisible, selectedPendingTasks}) {
                 color="#376ADA"
                 style={styles.icon}
               />
-              <Text style={{color: 'gray', paddingHorizontal: 5}}>
+              <Text style={{ color: 'gray', paddingHorizontal: 5 }}>
                 {' '}
                 {formattedDateTime}
               </Text>
+              <Icon
+                name="clock-o" // FontAwesome clock icon name
+                size={16}
+                color="#376ADA"
+                style={styles.icon}
+              />
+              <Text style={{ color: 'gray', paddingHorizontal: 1 }}>
+                {' '}
+                {item?.time ? item?.time : "_"}
+              </Text>
             </View>
-        
+
             <View style={styles.tag}>
               <Icon
                 name="map-marker"
@@ -66,7 +76,7 @@ function PendingTaskModal({visible, setVisible, selectedPendingTasks}) {
                 style={styles.icon}
               />
               <Text style={styles.tagText}>
-                {item?.task?.location || 'Test Indai'}
+                {item?.locationName?.split(',')[0].trim() || 'Test Indai'}
               </Text>
             </View>
           </View>
@@ -139,7 +149,7 @@ const styles = StyleSheet.create({
   taskCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent:"space-around",
+    justifyContent: "space-around",
     backgroundColor: '#f8f9fa',
     padding: 10,
     borderRadius: 10,
@@ -147,7 +157,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 5,
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     elevation: 3,
     marginHorizontal: 1,
   },
@@ -155,6 +165,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#007bff',
+    marginBottom: 4
   },
   taskLocation: {
     fontSize: 14,

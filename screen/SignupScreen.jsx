@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,24 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; // Import Icon
 import { devURL } from '../constants/endpoints';
+// import messaging from '@react-native-firebase/messaging';
 
 const Signup = ({ navigation }) => {
+  const [fcmToken, setFcmToken] = useState('');
+  // const getFCMToken = async () => {
+  //   const fcmToken = await messaging().getToken();
+  //   // const storedToken = await AsyncStorage.getItem('fcmToken');
+  //   await AsyncStorage.setItem('fcmToken', fcmToken);
+  //   setFcmToken(fcmToken)
+  //   // console.log('____ storedToken _________:', storedToken);
+  //   // console.log('FCM Token Login screen:', token);
+  // };
+
+  // useEffect(() => {
+  //   getFCMToken()
+  // }, [])
+
+
   const [name, setName] = useState('');
   const [mobile, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
@@ -29,17 +45,18 @@ const Signup = ({ navigation }) => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${devURL}/auth/signup`, {
+      const response = await fetch(`${devURL}/user/auth/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, mobile, email, password }),
+        body: JSON.stringify({ name, mobile, email, password,fcmToken }),
       });
 
       const data = await response.json();
+      console.log('status signup ----------', response.status);
 
-      if (response.ok) {
+      if (response.status == 201) {
         const jwtToken = data?.token;
 
         if (jwtToken) {

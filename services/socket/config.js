@@ -49,7 +49,7 @@ export const emitEvent = (event, data) => {
     if (socket) {
         socket.emit(event, data);
     } else {
-        console.warn('Socket not initialized. Call initializeSocket() first.');
+        // console.warn('Socket not initialized. Call initializeSocket() first.');
     }
 };
 
@@ -59,7 +59,7 @@ export const onEvent = (event, callback) => {
 
         socket.on(event, callback);
     } else {
-        console.warn('Socket not initialized. Call initializeSocket() first.');
+        // console.warn('Socket not initialized. Call initializeSocket() first.');
     }
 };
 
@@ -67,7 +67,7 @@ export const offEvent = (event) => {
     if (socket) {
         socket.off(event);
     } else {
-        console.warn('Socket not initialized. Call initializeSocket() first.');
+        // console.warn('Socket not initialized. Call initializeSocket() first.');
     }
 };
 

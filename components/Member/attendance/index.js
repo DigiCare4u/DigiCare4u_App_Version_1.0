@@ -5,43 +5,34 @@ import {
   Text,
   ActivityIndicator,
   Alert,
-  FlatList,
+  Animated,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { getDistanceFromLatLonInMeters } from '../../../services/distanceMatrix';
+import useLocation from '../../../hooks/useLocation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { devURL } from '../../../constants/endpoints';
-import useLocation from '../../../hooks/useLocation';
-import Loader from '../../Loader';
-
 
 const LiveAttendance = () => {
-
-
+  const [doesMemberParentUserHasGeoFencing, setDoesMemberParentUserHasGeoFencing] = useState(false);
+  const [doesMemberHasDailyAssignment, setDoesMemberHasDailyAssignment] = useState(false);
+  const [memberHasDailyAssignment, setMemberHasDailyAssignment] = useState([]);
   const [alreadyMarked, setAlreadyMarked] = useState(false);
-
+  const [existingAttendance, setExistingAttendance] = useState({});
+  const [MembersParentId, setMembersParentId] = useState('');
   const [isAtParentLocation, setIsAtParentLocation] = useState(false);
-  const [membersParentDetails, setMembersParentDetails] = useState([]);
-  const [membersParentId, setMembersParentId] = useState('');
   const [loading, setLoading] = useState(true);
+  const [fadeAnim] = useState(new Animated.Value(0)); // For smooth fade-in animation
 
-
-  
-
-  const { location, getCurrentLocation } = useLocation()
+  const { location, getCurrentLocation } = useLocation();
 
   useEffect(() => {
     if (!location) {
-
       getCurrentLocation();
     }
   }, [getCurrentLocation]);
-  const [proximityResults, setProximityResults] = useState({});
 
-  const PROXIMITY_RADIUS = 100; // Proximity radius in meters
-
-  const fetchMemberParentDetails = async () => {
+  const fetchMemberParentDetails_ = async () => {
     try {
       const jwtToken = await AsyncStorage.getItem('token');
       const response = await axios.get(`${devURL}/member/parent`, {
@@ -51,229 +42,357 @@ const LiveAttendance = () => {
         },
       });
 
-
-      const parentLocations = response?.data?.data?.parentUser?.location?.coordinates
-
-      setMembersParentId(response?.data?.data?.parentUser?._id)
-      setMembersParentDetails(parentLocations);
+      const parentLocations = response?.data?.data?.parentUser?.geoFenced?.coordinates;
+      setDoesMemberParentUserHasGeoFencing(parentLocations?.length > 0);
+      setMembersParentId(response?.data?.data?.parentUser?._id);
     } catch (error) {
       console.log(error);
+      Alert.alert('Error', 'Failed to fetch parent details.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  const fetchMemberParentDetails = async () => {
+    try {
+      const jwtToken = await AsyncStorage.getItem('token');
 
-      Alert.alert('Error', 'Failed to members parent.');
+      // Fetch parent details first
+      const response = await axios.get(`${devURL}/member/parent`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      });
+
+      const parentLocations = response?.data?.data?.parentUser?.geoFenced?.coordinates;
+      setDoesMemberParentUserHasGeoFencing(parentLocations?.length > 0);
+      setMembersParentId(response?.data?.data?.parentUser?._id);
+
+      // Now fetch the daily assignments for the member
+      const assignmentsResponse = await axios.post(`${devURL}/assignment/member/daily`, {}, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      });
+      // console.log('assignmentsResponse___________----->', assignmentsResponse.data.data);
+
+      // Check if the daily assignments data exists and has any tasks
+      if (assignmentsResponse.data.data.length > 0) {
+        setDoesMemberHasDailyAssignment(true)
+        setMemberHasDailyAssignment(assignmentsResponse?.data?.data[0])
+        // If there are daily assignments, perform necessary actions (e.g., update state)
+        // console.log('Daily assignments found:', assignmentsResponse?.data?.member);
+        // Add further logic here to process the assignments if needed
+      } else {
+        setDoesMemberHasDailyAssignment(false)
+        // If no daily assignments are found, you can handle accordingly
+        console.log('No daily assignments found.');
+      }
+    } catch (error) {
+      console.log(error);
+      // Alert.alert('Error', 'Failed to fetch parent details or daily assignments.');
     } finally {
       setLoading(false);
     }
   };
 
 
-  const markAttendance = async () => {
-    try {
-      console.log('Attempting to mark attendance...');
-
-      // Retrieve the JWT token from AsyncStorage
-      const jwtToken = await AsyncStorage.getItem('token');
-
-      if (!jwtToken) {
-        console.error('JWT token is missing');
-        throw new Error('Authentication token not found. Please log in again.');
-      }
-
-      // Make the API call
-      const response = await axios.post(
-        `${devURL}/member/attendance`, // URL
-        { // Request body (data)
-          // memberId: "60c72b2f9b1e8d1f4f3c8b2b", // ID of the member
-          parentId: membersParentId, // ID of the user (parent) who is tracking the member
-          latitude: location?.latitude, // Latitude at the time of punch-in
-          longitude: location?.longitude// Longitude at the time of punch-in
-        },
-        { // Request headers
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${jwtToken}` // Pass the token for authentication
-          }
-        }
-      );
-      setAlreadyMarked(false)
-      console.log('Attendance marked successfully:', response.data);
-      setAlreadyMarked(true)
-      return response.data; // Return the response data for further processing
-    } catch (error) {
-      // Handle API or other errors
-      if (error.response) {
-        // Server responded with a status code outside the 2xx range
-        const serverMessage = error.response.data.message;
-
-        if (serverMessage === 'Attendance already marked for today.') {
-          console.log(serverMessage);
-          setAlreadyMarked(true)
-          return { alreadyMarked_: true, message: serverMessage };
-        }
-
-        console.error('Server response:', error.response.data);
-        throw new Error(serverMessage || 'Failed to mark attendance.');
-      } else if (error.request) {
-        // Request was made but no response was received
-        console.error('No response received:', error.request);
-        throw new Error('No response from server. Please check your network connection.');
-      } else {
-        // Something else happened
-        throw new Error(error.message || 'An unexpected error occurred.');
-      }
-    }
-  };
-
-
-
-
-
-
-
-
-
-
-  const checkProximity = (memberLocation) => {
-    const distance = getDistanceFromLatLonInMeters(
-      location?.latitude,
-      location?.longitude,
-      memberLocation[0],
-      memberLocation[1]
-    );
-    setProximityResults(distance)
-    return distance <= PROXIMITY_RADIUS;
-  };
 
   useEffect(() => {
     if (location) {
-
       fetchMemberParentDetails();
+      isWithinParentGeoFenced();
     }
   }, [location]);
-  useEffect(() => {
-    if (membersParentDetails && location) {
 
-      checkProximity(membersParentDetails)
+  const markAttendance = async () => {
+    try {
+      const jwtToken = await AsyncStorage.getItem('token');
+      const response = await axios.post(
+        `${devURL}/member/attendance`,
+        {
+          parentId: MembersParentId,
+          latitude: location?.latitude,
+          longitude: location?.longitude,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${jwtToken}`,
+          },
+        }
+      );
 
-
+      setAlreadyMarked(response?.data?.alreadyMarked);
+      setExistingAttendance(response?.data?.existingAttendance);
+    } catch (error) {
+      console.error(error.message);
     }
-  }, [membersParentDetails, location]);
-  useEffect(() => {
-    if (proximityResults <= PROXIMITY_RADIUS) {
+  };
 
-      setIsAtParentLocation(true)
-      markAttendance()
-
-
-
+  const isWithinParentGeoFenced = async () => {
+    try {
+      const jwtToken = await AsyncStorage.getItem('token');
+      const response = await axios.get(
+        `${devURL}/member/parent/is-within-geo-fenced/${location?.latitude}/${location?.longitude}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${jwtToken}`,
+          },
+        }
+      );
+      setIsAtParentLocation(response?.data?.withinRange);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to check geo-fence status.');
+    } finally {
+      setLoading(false);
     }
-  }, [proximityResults]);
+  };
+
+  // useEffect(() => {
+  //   if (location) isWithinParentGeoFenced();
+  // }, [location]);
+
   useEffect(() => {
+    if (isAtParentLocation && MembersParentId) markAttendance();
+  }, [isAtParentLocation, MembersParentId]);
 
-  }, [alreadyMarked])
+  useEffect(() => {
+    // Fade-in animation when location status changes
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [isAtParentLocation]);
 
-  //=============================
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#4CAF50" />
+        <Text style={styles.loadingText}>Checking location...</Text>
+      </View>
+    );
+  }
 
-  // console.log('proximityResults', proximityResults, isAtParentLocation, location.accuracy);
+  // if (!doesMemberParentUserHasGeoFencing ) {
+  if (!doesMemberHasDailyAssignment) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.alertCard}>
+          <MaterialIcons name="error" size={48} color="#FF4C4C" />
+          <Text style={styles.alertText}>
+            🚨 Your parent has no geofencing set up. 🚨
+
+
+
+
+
+
+
+          </Text>
+        </View>
+      </View>
+    );
+  }
+  // console.log('memberHasDailyAssignment------->', memberHasDailyAssignment);
 
   return (
     <View style={styles.container}>
-      {isAtParentLocation ? (
-        <>
-          <Text style={styles.headerText}>Live Attendance</Text>
+      <Animated.View style={{ ...styles.content, opacity: fadeAnim }}>
+        <Text style={styles.headerText}>Live Attendance</Text>
+        {isAtParentLocation ? (
           <View style={styles.attendanceCard}>
             {alreadyMarked ? (
               <>
                 <MaterialIcons name="check-circle" size={48} color="#4CAF50" />
-                <Text style={styles.attendanceText}>Member Present 🙋🏻‍♂️</Text>
-                <Text style={styles.attendanceSubText}>Attendance already marked for today.</Text>
+                <Text style={styles.attendanceText}>You're Present 🙋🏻‍♂️</Text>
+                <Text style={styles.attendanceSubText}>
+                  Attendance already marked for today.
+                </Text>
+
+                <View style={styles.taskCard}>
+
+                  <MaterialIcons name="event" size={48} color="#4CAF50" />
+                  <Text style={styles.taskHeader}>GeoFenced Assignment</Text>
+                  <View style={styles.taskDetail}>
+                    {/* <Text style={styles.taskLabel}>Location:</Text> */}
+                    <Text style={styles.taskValue}>
+                      {memberHasDailyAssignment?.tasks[0]?.locationName}
+                    </Text>
+                  </View>
+                  <View >
+                    {/* <Text style={styles.taskLabel}>Time:</Text> */}
+                    <Text style={styles.taskValue}>
+                      Scheduled Time :{memberHasDailyAssignment?.tasks[0]?.time}
+                    </Text>
+                  </View>
+                  {/* <View style={styles.taskDetail}>
+                    <Text style={styles.taskLabel}>Event Name:</Text>
+                    <Text style={styles.taskValue}>
+                      {memberHasDailyAssignment?.tasks[0]?.eventName}
+                    </Text>
+                  </View> */}
+
+                  <View style={styles.taskDetail}>
+                    {/* <Text style={styles.taskLabel}>Date:</Text> */}
+                    <Text style={styles.taskValue}>
+                      {existingAttendance?.punchInTime && memberHasDailyAssignment?.tasks[0]?.time
+                        ? (() => {
+                          const punchInDateTime = new Date(existingAttendance.punchInTime);
+                          console.log('punchInDateTime', punchInDateTime);
+
+                          // Extract the date part from punchInDateTime
+                          const punchInDate = punchInDateTime.toISOString().split('T')[0];
+                          console.log('punchInDate', punchInDate);
+
+                          // Combine the date part with the task time
+                          const assignedTaskDateTime = new Date(`${punchInDate} ${memberHasDailyAssignment.tasks[0].time}`);
+                          console.log('assignedTaskDateTime', assignedTaskDateTime);
+
+                          const timeDifference = punchInDateTime - assignedTaskDateTime; // Difference in milliseconds
+
+                          const hours = Math.floor(Math.abs(timeDifference) / (1000 * 60 * 60));
+                          const minutes = Math.floor((Math.abs(timeDifference) % (1000 * 60 * 60)) / (1000 * 60));
+                          const sign = timeDifference < 0 ? '-' : '+';
+
+                          return `Difference: ${sign}${hours}h ${minutes}m`;
+                        })()
+                        : 'No time data available'}
+                    </Text>
+
+                  </View>
+
+                </View>
+
+
               </>
             ) : (
               <>
-                <MaterialIcons name="cancel" size={48} color="#F44336" />
-                <Text style={styles.attendanceText}>Member is Away ❗</Text>
-                <Text style={styles.attendanceSubText}>No attendance recorded yet.</Text>
+                <MaterialIcons name="hourglass-empty" size={48} color="#FF9800" />
+                <Text style={styles.attendanceText}>Marking Attendance...</Text>
               </>
             )}
           </View>
-
-        </>
-
-      ) : (
-        <Loader />
-      )}
+        ) : (
+          <View style={styles.alertCard}>
+            <MaterialIcons name="error" size={48} color="#FF4C4C" />
+            <Text style={styles.alertText}>
+              🚨 You're away from the parent location 🚨
+            </Text>
+          </View>
+        )}
+      </Animated.View>
     </View>
   );
 };
 
 export default LiveAttendance;
 
+// Add the styles as is from your code
+
+
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#f3f4f6',
-    padding: 1,
-    // backgroundColor:"red"
-  },
-  headerText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#376ADA',
-  },
-  list: {
-    paddingBottom: 20,
-  },
-  memberCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    padding: 15,
-    marginBottom: 10,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  memberDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  memberName: {
-    marginLeft: 10,
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-  },
-  statusIndicator: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-  },
-  attendanceCard: {
-    backgroundColor: '#fff',
+    flex: 1,
+    backgroundColor: '#f7f9fc',
     padding: 20,
-    marginVertical: 5,
-    borderRadius: 10,
+    justifyContent: 'center',
+  },
+  content: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#555',
+  },
+  headerText: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#376ADA',
+    marginBottom: 20,
+  },
+  attendanceCard: {
+    backgroundColor: '#E8F5E9',
+    padding: 20,
+    borderRadius: 15,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 6,
     elevation: 4,
   },
   attendanceText: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#333',
     marginVertical: 10,
-    textAlign: 'center',
   },
   attendanceSubText: {
     fontSize: 14,
-    color: '#555',
+    color: '#666',
     textAlign: 'center',
   },
-
+  alertCard: {
+    backgroundColor: '#FFECEC',
+    padding: 20,
+    borderRadius: 15,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  alertText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FF4C4C',
+    marginVertical: 10,
+    textAlign: 'center',
+  },
+  taskCard: {
+    backgroundColor: '#E3F2FD',
+    padding: 20,
+    borderRadius: 15,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+    marginVertical: 15,
+  },
+  taskHeader: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1976D2',
+    marginBottom: 10,
+  },
+  taskDetail: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 8,
+  },
+  taskLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  taskValue: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#555',
+  },
 });

@@ -1,111 +1,68 @@
 import React, { useEffect, useState } from 'react';
-import { Text, View, Image, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text, View, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import AssignmentModal from '../Modal/UserModel/AssignmentModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { devURL } from '../../constants/endpoints';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
-
-function AssignmentCard({ selectedChannelId, dateRange }) {
+function AssignmentList({ selectedChannelId, dateRange }) {
   const [openAssignmentModal, setOpenAssignmentModal] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [assignments, setAssignments] = useState([]);
-  const [noAssignmentsMessage, setNoAssignmentsMessage] = useState('');
 
   const fetchChannelMembersAssignments = async () => {
     try {
-      // console.log('payload -----', selectedChannelId, dateRange);
-
       const jwtToken = await AsyncStorage.getItem('token');
-      let today = new Date();
-      let formattedDate = today.toISOString().split('T')[0]; // Format to YYYY-MM-DD
-
-      const response = await axios.post(`${devURL}/user/members/assignments-records/${selectedChannelId}?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`,
+      const response = await axios.post(
+        `${devURL}/user/members/assignments-records/${selectedChannelId}?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`,
         {},
-
-        // `${devURL}/user/members/daily-assignments/${selectedChannelId}`,
-
         {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${jwtToken}`,
-          },
+            Authorization: `Bearer ${jwtToken}`,
+          }
         }
       );
-
-      // console.log('=========Visit data[useFetchMember]================')
-      // console.log('aaya ------------------------- !!', response?.data?.data);
-      setAssignments(response?.data?.data)
-      // const labels = response.data.map((item) => item._id || "Unknown");
-      // const data = response.data.map((item) => item.count);
-
-      setChartData_(response?.data?.data);
+      setAssignments(response?.data?.data || []);
     } catch (error) {
-      console.error("Error fetching visit data:", error);
+      console.error('Error fetching assignments:', error);
     }
   };
 
-
   useEffect(() => {
-    fetchChannelMembersAssignments()
-  }, [selectedChannelId,dateRange])
+    fetchChannelMembersAssignments();
+  }, [selectedChannelId, dateRange]);
 
-
-  const pendingTasks =  
-
-
-  console.log('assignments',assignments)
-
-  const handleCardPress = (item) => {
-    setSelectedAssignment(item); // Set the selected assignment
-    setOpenAssignmentModal(true); // Open the modal
+  const handleRowPress = (item) => {
+    setSelectedAssignment(item);
+    setOpenAssignmentModal(true);
   };
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity onPress={() => handleCardPress(item)}>
-      <View style={styles.card}>
-        {/* Left Side - Image */}
-        <Image source={{ uri: item.imageUrl }} style={styles.image} />
-
-        {/* Center - Name */}
-        <View style={styles.center}>
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.taskTitle}>Total : {item.totalAssignments} </Text>
-          {/* <Text style={styles.taskCount}>{item.totalAssignments}</Text> */}
-        </View>
-
-        {/* Right Side - Task Information */}
-        <View style={styles.right}>
-          <Text style={styles.taskTitle}>Pending : {item.pending} </Text>
-          {/* <Text style={styles.taskCount}>{item.pending}</Text> */}
-
-          <Text style={styles.taskTitle}>Completed : {item.completed} </Text>
-          {/* <Text style={styles.taskCount}>{item.completed}</Text> */}
-        </View>
+    <TouchableOpacity onPress={() => handleRowPress(item)} style={styles.row}>
+      <View style={styles.rowContent}>
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.details}>
+          Total: {item.totalAssignments} | Pending: {item.pending} | Completed: {item.completed}
+        </Text>
       </View>
+      <Icon name="chevron-right" size={24} color="#888" style={styles.icon} />
+
     </TouchableOpacity>
   );
 
   return (
-    <View>
-      <Text
-        style={{
-          fontSize: 20,
-          fontWeight: '700',
-          color: '#007BFF',
-          marginTop: 10,
-        }}
-      >
-        Assignment
-      </Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Assignments</Text>
       <FlatList
         data={assignments}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
         contentContainerStyle={styles.listContainer}
+        ListEmptyComponent={<Text style={styles.noData}>No assignments available.</Text>}
       />
-
-      {/* Assignment Modal */}
       <AssignmentModal
         visible={openAssignmentModal}
         setVisible={setOpenAssignmentModal}
@@ -116,49 +73,51 @@ function AssignmentCard({ selectedChannelId, dateRange }) {
 }
 
 const styles = StyleSheet.create({
-  card: {
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#F8F9FA',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#376ADA',
+    marginBottom: 10,
+  },
+  listContainer: {
+    paddingBottom: 10,
+  },
+  row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 10,
-    marginVertical: 5,
-    marginHorizontal: 2,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
+    paddingVertical: 10,
+    paddingHorizontal: 8,
   },
-  image: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 10,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  rowContent: {
+    flexDirection: 'column',
   },
   name: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
     color: '#333',
   },
-  right: {
-    alignItems: 'flex-end',
-  },
-  taskTitle: {
-    fontSize: 12,
-    color: '#666',
-  },
-  taskCount: {
+  details: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#333',
+    color: '#666',
+    marginTop: 2,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginVertical: 4,
+  },
+  noData: {
+    textAlign: 'center',
+    color: '#888',
+    marginTop: 20,
+    fontSize: 16,
   },
 });
 
-export default AssignmentCard;
+export default AssignmentList;

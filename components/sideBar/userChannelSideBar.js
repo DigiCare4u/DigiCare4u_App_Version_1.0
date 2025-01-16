@@ -9,31 +9,46 @@ import {
   FlatList,
   Alert,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import Modal from 'react-native-modal';
 import Icon from 'react-native-vector-icons/AntDesign';
 import CheckBox from '@react-native-community/checkbox';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import useUserFetchChannel from '../../hooks/useUserFetchChannel';
-import {emitEvent, onEvent} from '../../services/socket/config';
+import { emitEvent, onEvent } from '../../services/socket/config';
+import { devURL } from '../../constants/endpoints';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const UserChannelSideBar = ({visible, setVisible, selectedChannelId}) => {
-  // console.log('selectedChannelId _______', selectedChannelId);
+const UserChannelSideBar = ({ visible, setVisible, selectedChannelId }) => {
+  const [sosMessage, setSosMessage] = useState('SOS message');
+  const [liveLocationRequestingMessage, stLiveLocationRequestingMessage] = useState('Live Location');
   const [checkBox, setCheckBox] = useState(false);
-  const {channelMemberList, fetchChannelMember} = useUserFetchChannel();
+  const { channelMemberList, fetchChannelMember } = useUserFetchChannel();
   const [checkedItems, setCheckedItems] = useState({});
 
+
   const handleCheckBoxToggle = (itemId) => {
-    setCheckedItems(prevState => ({
-      ...prevState,
-      [itemId]: !prevState[itemId],
-    }));
-    setSelectedMemberId(itemId);
-    // setSelectedMemberId(item?.memberId);
+    setCheckedItems((prevState) => {
+      const isChecked = prevState[itemId];
+      const updatedState = {
+        ...prevState,
+        [itemId]: !isChecked, // Toggle the checkbox state
+      };
 
-    console.log('member Id : ', itemId);
+      // Update selectedMemberId based on the new state
+      if (!isChecked) {
+        setSelectedMemberId(itemId); // Set the selected member when checked
+      } else {
+        setSelectedMemberId(''); // Clear the selected member when unchecked
+      }
+
+      console.log('updatedState', updatedState);
+      return updatedState;
+
+    });
+
+    console.log('Toggled Member ID:', itemId);
   };
-
 
 
   const [selectedMemberId, setSelectedMemberId] = useState('');
@@ -41,15 +56,93 @@ const UserChannelSideBar = ({visible, setVisible, selectedChannelId}) => {
     fetchChannelMember(selectedChannelId);
   }, [selectedChannelId]);
 
+
+
+  const sendSosToSelectedMembers = async () => {
+    try {
+      if (!selectedMemberId) {
+        Alert.alert('Error', 'No members selected!');
+        return;
+      }
+      const jwtToken = await AsyncStorage.getItem('token');
+
+      const response = await fetch(`${devURL}/user/members/sos`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${jwtToken}`,
+
+        },
+        body: JSON.stringify({
+          memberIds: Object.keys(checkedItems).filter((id) => checkedItems[id]), // Extract selected member IDs
+          message: sosMessage
+        }),
+      });
+      console.log('SOS response ', response.status);
+
+
+      const result = await response.json();
+
+      if (response.status == 200) {
+        Alert.alert('Success', 'SOS messages sent successfully!');
+      } else {
+        Alert.alert('Error', result.message || 'Failed to send SOS messages.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+      console.error(error);
+    }
+  };
+
+
+
+  const requestLiveLocationForSelectedMembers = async () => {
+    try {
+      if (!selectedMemberId) {
+        Alert.alert('Error', 'No members selected!');
+        return;
+      }
+      const jwtToken = await AsyncStorage.getItem('token');
+
+      const response = await fetch(`${devURL}/user/members/request-live-location`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${jwtToken}`,
+
+        },
+        body: JSON.stringify({
+          memberIds: Object.keys(checkedItems).filter((id) => checkedItems[id]), // Extract selected member IDs
+          message: liveLocationRequestingMessage
+        }),
+      });
+      console.log('Live location sharing  response ', response.status);
+
+
+      const result = await response.json();
+
+      if (response.status == 200) {
+        Alert.alert('Success', 'Location Requested Successfully!');
+      } else {
+        Alert.alert('Error', result.message || 'Failed to request location messages.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+      console.error(error);
+    }
+  };
+
+
+
+
   //===============================
 
-  const renderChannelMemberList = ({item}) => {
+  const renderChannelMemberList = ({ item }) => {
     if (!item) {
       return (
-        <Text style={{color: 'red', textAlign: 'center'}}>Loader .....</Text>
+        <Text style={{ color: 'red', textAlign: 'center' }}>Loader .....</Text>
       );
     }
-    // console.log('item', item);
     return (
       <View style={styles.Card}>
         <View style={styles.memberItem}>
@@ -62,9 +155,9 @@ const UserChannelSideBar = ({visible, setVisible, selectedChannelId}) => {
                   checkBox && styles.checkedWrapper,
                 ]}>
                 <CheckBox
-                  onValueChange={() => handleCheckBoxToggle(item?.memberId)}
+                  onValueChange={() => handleCheckBoxToggle(item?.memberId?._id)}
 
-                  value={checkedItems[item?.memberId] || false} // Check state for this item
+                  value={checkedItems[item?.memberId?._id] || false} // Check state for this item
                   // onValueChange={() => {
                   //   setCheckBox(prev => !prev);
                   //   setSelectedMemberId(item?.memberId);
@@ -76,14 +169,14 @@ const UserChannelSideBar = ({visible, setVisible, selectedChannelId}) => {
 
               {/* Image */}
               <Image
-                source={{uri: item.avatar || 'https://via.placeholder.com/150'}}
+                source={{ uri: item.avatar || 'https://via.placeholder.com/150' }}
                 style={styles.memberAvatar}
               />
 
               {/* Member Info */}
               <View style={styles.textContainer}>
                 {/* Name */}
-                <Text style={styles.memberName}>{item?.memberName}</Text>
+                <Text style={styles.memberName}>{item?.memberId?.name}</Text>
                 {/* Last Location */}
                 <View style={styles.locationContainer}>
                   <Icon
@@ -99,7 +192,7 @@ const UserChannelSideBar = ({visible, setVisible, selectedChannelId}) => {
               </View>
             </View>
           ) : (
-            <Text style={{color: 'red'}} t>
+            <Text style={{ color: 'red' }} t>
               Loader .....
             </Text>
           )}
@@ -153,29 +246,22 @@ const UserChannelSideBar = ({visible, setVisible, selectedChannelId}) => {
           keyExtractor={item => item._id}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <Text style={{textAlign: 'center', marginTop: 20}}>
+            <Text style={{ textAlign: 'center', marginTop: 20 }}>
               No members found.
             </Text>
           }
         />
         {/* </View> */}
-        <View style={{marginVertical: 0}}>
+        <View style={{ marginVertical: 0 }}>
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[styles.button, styles.requestButton]}
-              onPress={() => Alert(pressed)}>
-              <Text style={styles.buttonText}>Request</Text>
+              onPress={requestLiveLocationForSelectedMembers}>
+              <Text style={styles.buttonText}>Request Location</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, styles.sosButton]}
-              onPress={() => {
-                emitEvent('SOS', {
-                  memberId: selectedMemberId,
-                  userId: 'not yet',
-                  message: 'Big Boss wants you to be alert !',
-                });
-                Alert.alert('Success', 'SOS sent !');
-              }}>
+              onPress={sendSosToSelectedMembers}>
               <Text style={styles.buttonText}>SOS</Text>
             </TouchableOpacity>
           </View>
@@ -205,7 +291,7 @@ const styles = StyleSheet.create({
     // padding:5,
     borderRadius: 20,
     shadowColor: '#5dade2',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
     alignSelf: 'center',
@@ -285,7 +371,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#007ACC',
   },
   checkbox: {
-    transform: [{scale: 1.4}],
+    transform: [{ scale: 1.4 }],
   },
   memberAvatar: {
     width: 40,

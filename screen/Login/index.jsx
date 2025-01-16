@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,17 +13,69 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import AntDesignIcon from 'react-native-vector-icons/AntDesign';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {devURL} from '../../constants/endpoints';
-import {useAuth} from '../../context/auth';
+import { devURL } from '../../constants/endpoints';
+import { useAuth } from '../../context/auth';
 import Logo from '../../components/Assets/logo.jpeg';
+// import messaging from '@react-native-firebase/messaging';
+import axios from 'axios';
 
-const LoginScreen = ({navigation}) => {
+const LoginScreen = ({ navigation }) => {
+
+
+
+
+  // const getFCMToken = async () => {
+  //   // const token = await messaging().getToken();
+  //   const storedToken = await AsyncStorage.getItem('fcmToken');
+
+  //   console.log('____ storedToken _________:', storedToken);
+  //   console.log('FCM Token Login screen:', token);
+  // };
+
+  // useEffect(() => {
+  //   requestPermission();
+  //   getFCMToken();
+
+  //   const unsubscribeOnMessage = messaging().onMessage(async remoteMessage => {
+  //     console.log('Foreground message received:', remoteMessage);
+  //     Alert.alert(
+  //       remoteMessage.notification?.title || 'Notification',
+  //       remoteMessage.notification?.body || 'You have a new message!'
+  //     );
+  //   });
+
+  //   const unsubscribeNotificationOpened = messaging().onNotificationOpenedApp(remoteMessage => {
+  //     console.log('Notification caused app to open:', remoteMessage);
+  //   });
+
+  //   messaging()
+  //     .getInitialNotification()
+  //     .then(remoteMessage => {
+  //       if (remoteMessage) {
+  //         console.log('Notification caused app to open from quit state:', remoteMessage);
+  //       }
+  //     });
+
+  //   // Cleanup listeners on unmount
+  //   return () => {
+  //     unsubscribeOnMessage();
+  //     unsubscribeNotificationOpened();
+  //   };
+  // }, []);
+
+
+
+
+
+
+
+
   const [email, setEmail] = useState('');
   const [authData, setAuthData] = useState({});
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false); 
-  const {IsAuthenticaticated} = useAuth();
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const { IsAuthenticaticated } = useAuth();
 
   const isButtonDisabled = !email || !password;
 
@@ -45,6 +97,14 @@ const LoginScreen = ({navigation}) => {
     setLoading(true);
 
     try {
+      // const currentToken = await messaging().getToken();
+
+
+
+
+
+      // console.log('storedToken @ app start ____ :', storedToken);
+
       const response = await fetch(`${devURL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -112,7 +172,7 @@ const LoginScreen = ({navigation}) => {
             autoCapitalize="none"
             keyboardType="email-address"
           />
-          {email.length > 0 && ( 
+          {email.length > 0 && (
             <TouchableOpacity
               style={styles.clearIcon}
               onPress={() => setEmail('')}
@@ -184,7 +244,7 @@ const styles = StyleSheet.create({
     color: '#007ACC',
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: {width: 1, height: 1},
+    textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 4,
     marginBottom: 10,
   },
@@ -205,7 +265,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     paddingHorizontal: 10,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 5,
@@ -230,7 +290,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 15,
     elevation: 5,
@@ -260,7 +320,7 @@ const styles = StyleSheet.create({
     color: '#007ACC',
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: {width: 1, height: 1},
+    textShadowOffset: { width: 1, height: 1 },
   },
   clearIcon: {
     position: 'absolute',

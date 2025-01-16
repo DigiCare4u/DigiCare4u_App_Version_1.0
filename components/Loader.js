@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
- 
+
 const Loader = ({ message = 'Loading...', size = 'large', color = '#376ADA' }) => {
   return (
     <View style={styles.container}>
@@ -9,7 +9,7 @@ const Loader = ({ message = 'Loading...', size = 'large', color = '#376ADA' }) =
     </View>
   );
 };
- 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -24,5 +24,5 @@ const styles = StyleSheet.create({
     color: '#333', // Change text color if necessary
   },
 });
- 
+
 export default Loader;

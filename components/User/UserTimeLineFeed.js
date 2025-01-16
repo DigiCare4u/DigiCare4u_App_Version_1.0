@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, FlatList, ScrollView } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { devURL } from '../../constants/endpoints';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import moment from 'moment';
 
-const UserTimeLineFeed = ({ selectedMmeberId, selectedDate_,setTransitMemberData }) => {
+const UserTimeLineFeed = ({ selectedMmeberId, selectedDate_, setTransitMemberData }) => {
   const [timelineData, setTimelineData] = useState([]);
-  const [location, setLocations] = useState([]);
 
   const fetchDailyLocations = async () => {
     try {
@@ -22,47 +22,66 @@ const UserTimeLineFeed = ({ selectedMmeberId, selectedDate_,setTransitMemberData
         }
       );
       setTimelineData(response?.data?.data); // Set fetched data to state
-      console.log('response?.data?.data',response?.data?.data);
-      
-      // setTransitMemberData(response?.data?.data)
     } catch (error) {
-      console.error('Error fetching locations==:', error);
+      console.error('Error fetching locations:', error);
     }
   };
 
   useEffect(() => {
     fetchDailyLocations();
-  }, [selectedMmeberId, selectedDate_]); // Fetch data on channel or date change
+  }, [selectedMmeberId, selectedDate_]);
+  const getDayWithSuffix = (day) => {
+    const suffixes = ['th', 'st', 'nd', 'rd'];
+    const value = day % 100;
+    return day + (suffixes[(value - 20) % 10] || suffixes[value] || suffixes[0]);
+  };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.eventContainer}>
-      <View style={styles.timeline}>
-        <View style={styles.line} />
-        <View style={styles.dot}>
-          <Icon name={'home'} size={20} color="white" style={styles.icon} />
+  const renderItem = ({ item }) => {
+    const formattedDateTime =
+      moment(item.averageTimestamp).format('ddd, ') +
+      getDayWithSuffix(moment(item.date).date()) +
+      moment(item.averageTimestamp).format(' [@] hh:mm A');
+
+    return (
+      <View style={styles.eventContainer}>
+        <View style={styles.timeline}>
+          <View style={styles.line} />
+          <View style={styles.dot}>
+            <Icon name="map-marker" size={16} color="white" />
+          </View>
+        </View>
+        <View style={styles.eventDetails}>
+          <Text style={styles.location}>{item._id || 'Unknown Location'}</Text>
+
+          <Text style={styles.description}>Total Visits : {item.count}</Text>
+          <Text>
+
+            <Icon
+              name="clock-o" // FontAwesome clock icon name
+              size={16}
+              color="#376ADA"
+              style={styles.icon}
+            /> {formattedDateTime}
+          </Text>
         </View>
       </View>
-      <View style={styles.eventDetails}>
-        <Text style={styles.location}>{item._id}</Text>
-        <Text style={styles.description}>Total Visit: {item.count}</Text>
-        <Text style={styles.timeText}>{item.averageTimestamp}</Text>
-      </View>
-    </View>
-  );
+
+    )
+  };
 
   return (
     <ScrollView style={styles.container}>
-      {timelineData ? (
+      {timelineData && timelineData.length > 0 ? (
         <FlatList
           data={timelineData}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => index.toString()}
           showsVerticalScrollIndicator={false}
         />
       ) : (
-        <Text style={{ fontSize: 15, fontWeight: '600', color: 'black' }}>
-          Api Data is not Found
-        </Text>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No data available for the selected date.</Text>
+        </View>
       )}
     </ScrollView>
   );
@@ -70,62 +89,75 @@ const UserTimeLineFeed = ({ selectedMmeberId, selectedDate_,setTransitMemberData
 
 export default UserTimeLineFeed;
 
-
 const styles = StyleSheet.create({
   container: {
-    // backgroundColor: 'red',
+    // flex: 1,
+    height:100,
+    padding: 10,
+    marginBottom: 10,
+
   },
   eventContainer: {
     flexDirection: 'row',
-    marginVertical: 0,
-  },
-  timeContainer: {
-    width: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  timeText: {
-    fontSize: 10,
-    color: '#007ACC',
-    fontWeight: '600',
+    marginBottom: 15,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    padding: 10,
   },
   timeline: {
     alignItems: 'center',
-    width: 40,
+    marginRight: 10,
   },
   line: {
     flex: 1,
     width: 2,
     backgroundColor: '#007ACC',
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
   },
   dot: {
-    width: 35,
-    height: 35,
-    borderRadius: 20,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: '#007ACC',
-    position: 'absolute',
-    top: '10%',
-    // marginTop: 5,
-    justifyContent: 'center', // Centers content vertically
-    alignItems: 'center', // Centers content horizontally
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
   },
   eventDetails: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: 5,
-    borderRadius: 10,
-  },
-  icon: {
-    marginRight: 10,
+    justifyContent: 'space-between',
   },
   location: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
+    marginBottom: 5,
   },
   description: {
     fontSize: 14,
     color: '#666',
+    marginBottom: 5,
+  },
+  timeText: {
+    fontSize: 12,
+    color: '#007ACC',
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#aaa',
   },
 });

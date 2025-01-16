@@ -27,7 +27,7 @@ function Assignment() {
   });
   const [noAssignmentsMessage, setNoAssignmentsMessage] = useState('');
 
-  console.log('selectedPendingTasks', selectedPendingTasks)
+  // console.log('selectedPendingTasks', selectedPendingTasks)
 
   // Fetch assignments API call
   const fetchAssignments = async () => {
@@ -53,7 +53,7 @@ function Assignment() {
       } else {
         setNoAssignmentsMessage('');
         const tasks = data.member.tasks || [];
-        const pendingTasks = tasks.filter(task => task.status === 'Pending');
+        const pendingTasks = tasks.filter(task => task.status === 'pending');
         const completedTasks = tasks.filter(task => task.status === 'completed');
         setEvents([
           {
@@ -73,23 +73,26 @@ function Assignment() {
     fetchAssignments();
   }, [startDate, endDate]);
   
-
   const renderTaskItem = ({ item }) => {
     return (
       <View style={styles.card}>
-        {/* <Text style={styles.nameText}>{item.name}</Text> */}
-        <Text style={styles.totalAssignmentsText}>
-          Total Tasks: {item.totalTasks}
-        </Text>
+        <View style={styles.cardHeader}>
+          <Text style={styles.totalAssignmentsText}>
+            Total Tasks: {item.totalTasks}
+          </Text>
+        </View>
+        <View style={styles.divider} />
         <View style={styles.inlineButtons}>
           <TouchableOpacity
-            style={styles.button}
+            style={[styles.button, styles.pendingButton]}
             onPress={() => {
               setSelectedPendingTasks(item.pendingTasks);
               setOpenPendingModal(true);
             }}
           >
-            <Text style={styles.buttonText}>Pending: {item.pendingTasks.length}</Text>
+            <Text style={styles.buttonText}>
+              Pending: {item?.pendingTasks?.length}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.completedButton]}
@@ -98,13 +101,15 @@ function Assignment() {
               setOpenCompletedModal(true);
             }}
           >
-            <Text style={styles.buttonText}>Completed: {item.completedTasks.length}</Text>
+            <Text style={styles.buttonText}>
+              Completed: {item?.completedTasks?.length}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
     );
   };
-
+  
   return (
     <SafeAreaView style={styles.container}>
       <DatePicker setStartDate={setStartDate} setEndDate={setEndDate} />
@@ -133,66 +138,68 @@ function Assignment() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    // padding: 10,
-    backgroundColor: '#f8f9fa',
-    // marginHorizontal:2,
-  },
-  title: {
-    color: 'black',
-    fontSize: 15,
-    fontWeight: '600',
-    marginVertical: 10,
-  },
-  noAssignmentsText: {
-    textAlign: 'center',
-    color: 'red',
-    marginTop: 20,
-  },
   card: {
     backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
+    borderRadius: 12,
+    marginVertical: 8,
+    padding: 16,
     shadowColor: '#000',
     shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
     elevation: 3,
-    marginHorizontal:5,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   nameText: {
     fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 5,
-    color:"#376ADA"
+    fontWeight: 'bold',
+    color: '#333',
   },
   totalAssignmentsText: {
-    fontSize: 20,
-    marginBottom: 10,
-    color:"black",
-    fontWeight:"600",
-    textAlign:"center"
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#555',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#ddd',
+    marginVertical: 8,
   },
   inlineButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
   },
   button: {
-    backgroundColor: '#376ADA',
-    padding: 10,
-    borderRadius: 5,
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  pendingButton: {
+    backgroundColor: '#fef6e4',
+    borderColor: '#ffd700',
   },
   completedButton: {
-    backgroundColor: '#28a745',
+    backgroundColor: '#e6ffed',
+    borderColor: '#00c851',
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: '500',
-    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
   },
 });
 

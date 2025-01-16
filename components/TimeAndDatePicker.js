@@ -3,31 +3,35 @@ import { StyleSheet, Text, View, TouchableOpacity, Modal } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
-const DateAndTimePicker = ({ setDate  }) => {
+const DateAndTimePicker = ({setDate,setTime}) => {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showTimePicker, setShowTimePicker] = useState(false);
 
 
-    console.log('setDate', setDate)
 
     const onDateChange = (event, newDate) => {
-        setShowDatePicker(false);
-        if (newDate) {
+      if (newDate) {
+          setShowDatePicker(false);
           const updatedDate = new Date(selectedDate);
           updatedDate.setFullYear(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
           setSelectedDate(updatedDate);
           setDate(updatedDate); // Update the parent with the new date
+         
+          // setDate(newDate)
         }
       };
     
       const onTimeChange = (event, newTime) => {
         setShowTimePicker(false);
         if (newTime) {
-          const updatedTime = new Date(selectedDate);
+          
+          const updatedTime = new Date(newTime);
           updatedTime.setHours(newTime.getHours(), newTime.getMinutes());
           setSelectedDate(updatedTime);
           setDate(updatedTime); // Update the parent with the new time
+          console.log('newTime____________updatedTime',newTime.getHours());
+          setTime(`${newTime.getHours()}:${newTime.getMinutes()}`)
         }
       };
 

@@ -8,16 +8,16 @@ import { devURL } from "../../constants/endpoints";
 import { initializeSocket, onEvent } from '../../services/socket';
 
 
-const getMemberJWT =  async () =>{
-        const jwt = await AsyncStorage.getItem('token');
-        return jwt
+const getMemberJWT = async () => {
+    const jwt = await AsyncStorage.getItem('token');
+    return jwt
 };
 
 
 
 const TeamMembers = ({ visible, setVisible, fetchLocalities }) => {
-            const [socket_, setSocket_] = useState(null);
-            const [members, setMembers] = useState([]);
+    const [socket_, setSocket_] = useState(null);
+    const [members, setMembers] = useState([]);
 
 
     // useEffect(()=>{
@@ -33,13 +33,13 @@ const TeamMembers = ({ visible, setVisible, fetchLocalities }) => {
     // }, [])
 
     const handle = (d) => {
- 
+
         console.log('ddddddd', d);
     }
     // useEffect(() => {
- 
+
     //     initializeSocket(devURL)
-       
+
     //     // console.log("Socket Connected?", a);
     // }, [])
     // onEvent('user_66f673eaa447d313a6747f9a', handle)

@@ -8,33 +8,21 @@ import {
   StyleSheet,
 } from 'react-native';
 import CalenderAndDownload from './CalenderAndDownload';
-import AttendanceCard from './AttendanceCard';
+import MemberReport from './MemberReport';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { devURL } from '../../constants/endpoints';
-import DateAndTimePicker from '../DateRange';
 import DateRange from '../DateRange';
 
 function AssignmentAndAttendance() {
   const [selectedChannelId, setSelectedChannelId] = useState('');
-
   const [channelList, setChannelList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-
   const [dateRange, setDateRange] = useState({
     startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     endDate: new Date(),
   });
-
-
-
-  // console.log('dateRange _ --------', dateRange);
-
-
-
 
   const fetchChannelList = async () => {
     try {
@@ -53,19 +41,12 @@ function AssignmentAndAttendance() {
         },
       });
 
-      //   console.log('Response : ', response?.data);
-
       const channels = response?.data?.channels || [];
       setChannelList(channels);
-      // setWhichChannelIsSelected()
 
-      // Automatically select the first channel if available
       if (channels.length > 0) {
         setSelectedChannelId(channels[0]._id);
-        // setVisibleModel(true);
       }
-
-      //   setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error('Error fetching channel list:', error);
     } finally {
@@ -78,7 +59,6 @@ function AssignmentAndAttendance() {
     fetchChannelList();
   }, []);
 
-
   return (
     <View style={styles.container}>
       <View style={styles.card}>
@@ -89,19 +69,12 @@ function AssignmentAndAttendance() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.slider}
           renderItem={({ item }) => (
-            //   <TouchableOpacity
-            //   style={[
-            //       styles.channelContainer,
-            //       selectedChannel === item.id && styles.selectedChannel,
-            //   ]}
-            //   onPress={() => setSelectedChannel(item.id)}
-            // >
             <TouchableOpacity
               style={[
                 styles.channelContainer,
-                selectedChannelId === item._id && styles.selectedChannel, // Compare with selectedChannelId
+                selectedChannelId === item._id && styles.selectedChannel,
               ]}
-              onPress={() => setSelectedChannelId(item._id)} // Update selected channel
+              onPress={() => setSelectedChannelId(item._id)}
             >
               <Image
                 source={{ uri: item.avatar || 'https://via.placeholder.com/150' }}
@@ -112,15 +85,10 @@ function AssignmentAndAttendance() {
           )}
         />
       </View>
-      {/* <CalenderAndDownload/> */}
-
 
       <DateRange setDateRange={setDateRange} />
 
-      <AttendanceCard
-        dateRange={dateRange}
-        selectedChannelId={selectedChannelId} />
-
+      <MemberReport dateRange={dateRange} selectedChannelId={selectedChannelId} />
     </View>
   );
 }
@@ -128,64 +96,61 @@ function AssignmentAndAttendance() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    // backgroundColor:"red"
+    backgroundColor: '#F7F8FA',
+    paddingHorizontal: 16,
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingVertical: 5,
-    elevation: 3,
+    borderRadius: 12,
+    paddingVertical: 8,
+    marginBottom: 16,
+    elevation: 5,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
-    //  backgroundColor:"red"
   },
   slider: {
     paddingHorizontal: 0,
-    //  backgroundColor:"red"
   },
   channelContainer: {
     alignItems: 'center',
-    marginHorizontal: 5,
-    padding: 2,
-    borderRadius: 10,
-    width: 70,
-    //  backgroundColor:"red"
+    marginHorizontal: 8,
+    padding: 10,
+    borderRadius: 12,
+    width: 80,
+    backgroundColor: '#F4F5F7',
+    borderWidth: 1,
+    borderColor: '#E1E2E6',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   selectedChannel: {
     borderColor: '#007BFF',
-    borderWidth: 1.5,
-  },
-  image: {
-    width: 40,
-    height: 40,
-    borderRadius: 35,
-    marginBottom: 8,
+    backgroundColor: '#E3F1FF',
   },
   channelName: {
-    fontSize: 10,
+    fontSize: 14,
+    fontWeight: '600',
     textAlign: 'center',
-    color: '#007BFF',
+    color: '#333',
+    marginTop: 6,
   },
-  selectedChannelInfo: {
-    marginTop: 20,
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    elevation: 2,
+  memberAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginBottom: 8,
+    borderWidth: 2,
+    borderColor: '#007BFF',
   },
   infoText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: 'bold',
     color: 'red',
   },
-  memberAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 25,
-    marginRight: 7,
+  datePickerContainer: {
+    marginTop: 16,
   },
 });
 

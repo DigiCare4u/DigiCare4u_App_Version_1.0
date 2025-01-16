@@ -7,15 +7,22 @@ const InsightTwo = () => {
   const {records, fetchTrackingRecords} = useFetchMember();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  console.log('records===', records)
   const fetchData = async () => {
-    setIsRefreshing(true);
-    await fetchTrackingRecords();
-    setIsRefreshing(false);
+    try {
+      setIsRefreshing(true);
+      await fetchTrackingRecords();
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   useEffect(() => {
     fetchData();
   }, []);
+  
 
   const renderItem = ({item}) => (
     <View style={styles.eventContainer}>

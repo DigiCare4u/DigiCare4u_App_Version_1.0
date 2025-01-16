@@ -1,19 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { StyleSheet, View, TextInput, FlatList, Text, TouchableOpacity, Image } from "react-native";
-import Mapbox, { MapView, Camera, MarkerView } from "@rnmapbox/maps";
-import Icon from "react-native-vector-icons/FontAwesome";
-import MapboxGL from '@rnmapbox/maps'; // React Native Mapbox
+import React, { useEffect, useState, useRef } from "react";
+import { StyleSheet, View, TextInput, FlatList, Text, TouchableOpacity } from "react-native";
+import MapView, { Marker } from "react-native-maps";
 import Loader from "./Loader";
 import useLocation from "../hooks/useLocation";
-
-Mapbox.setAccessToken("sk.eyJ1IjoicHJvZGV2MzY5IiwiYSI6ImNtM21vaHppbzB5azQycXF6MTJyZjJuamcifQ.ZnpKclc0DrYzGN1fA1jqNQ");
 
 const MapSchedule = (props) => {
   const [query, setQuery] = useState("");
   const [showText, setShowText] = useState("");
-
   const [places, setPlaces] = useState([]);
-  const { location, error, getCurrentLocation } = useLocation()
+  const { location, error, getCurrentLocation } = useLocation();
+  const mapRef = useRef(null); // Reference for the MapView
+  const [selectedLocation, setSelectedLocation] = useState(null);
 
   useEffect(() => {
     if (!location) {
@@ -21,7 +18,6 @@ const MapSchedule = (props) => {
     }
   }, [getCurrentLocation]);
 
-  const [selectedLocation, setSelectedLocation] = useState(null);
   useEffect(() => {
     if (location) {
       setSelectedLocation({
@@ -41,10 +37,7 @@ const MapSchedule = (props) => {
             text
           )}.json?access_token=sk.eyJ1IjoicHJvZGV2MzY5IiwiYSI6ImNtM21vaHppbzB5azQycXF6MTJyZjJuamcifQ.ZnpKclc0DrYzGN1fA1jqNQ`
         );
-        // console.log('data=============', response);
         const data = await response.json();
-
-        // console.log('--------------MapSchedule-------------')
 
         setPlaces(data.features || []);
       } catch (error) {
@@ -56,33 +49,49 @@ const MapSchedule = (props) => {
   };
 
   const handlePlaceSelect = (place) => {
-    setSelectedLocation({
+    const newLocation = {
       latitude: place.center[1],
       longitude: place.center[0],
-    });
-    props.setSelectedLocationForAPI({
-      latitude: place.center[1],
-      longitude: place.center[0],
-    });
+    };
+    setSelectedLocation(newLocation);
+    props.setSelectedLocationForAPI(newLocation);
     props.setQuery(place.place_name);
     setShowText(place.place_name);
+
+    // Animate to the selected location
+    if (mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          ...newLocation,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        1000 // Duration in ms
+      );
+    }
 
     setPlaces([]);
   };
 
-
-  // console.log('location ---------', location);
-  // console.log('selectedLocation', selectedLocation);
   const onMarkerDragEnd = (e) => {
-    console.log(e)
-    const newCoords = e.geometry.coordinates;
+    const newCoords = e.nativeEvent.coordinate;
     props.setSelectedLocationForAPI({
-      latitude: newCoords[1],
-      longitude: newCoords[0],
+      latitude: newCoords.latitude,
+      longitude: newCoords.longitude,
     });
-    props.setQuery('customPlace');
+    props.setQuery("customPlace");
 
-    // console.log('New Marker Coordinates -----------------------------:', newCoords);
+    // Animate to the new marker position
+    if (mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          ...newCoords,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        1000
+      );
+    }
   };
 
   return (
@@ -110,58 +119,28 @@ const MapSchedule = (props) => {
         />
       )}
 
-      {location ? (<MapboxGL.MapView style={{
-        flex: 1,
-        backgroundColor: 'red',
-        height: 300,
-        width: "100%",
-
-      }}
-        // styleURL={MapboxGL.StyleURL.Street}
-      >
-        <MapboxGL.Camera
-          zoomLevel={12}
-          centerCoordinate={
-            [
-              selectedLocation ? selectedLocation?.longitude : 0.0,
-              selectedLocation ? selectedLocation?.latitude : 0.0,
-            ]}
-
-        />
-
-        {/* Draggable Marker */}
-        <MapboxGL.PointAnnotation
-          id="marker"
-          coordinate={[
-            selectedLocation ? selectedLocation?.longitude : 0.0,
-            selectedLocation ? selectedLocation?.latitude : 0.0,]}
-          draggable={true}
-          onDragEnd={onMarkerDragEnd}
-        />
-      </MapboxGL.MapView>) : <Loader />}
-
-
-
-      {/* Map View */}
-      {/* <MapView style={styles.map}>
-        {selectedLocation && (
-          <>
-            <Camera
-              zoomLevel={30}
-              centerCoordinate={[selectedLocation.longitude, selectedLocation.latitude]}
+      {location ? (
+        <MapView
+          ref={mapRef}
+          style={styles.map}
+          initialRegion={{
+            latitude: selectedLocation ? selectedLocation.latitude : 0.0,
+            longitude: selectedLocation ? selectedLocation.longitude : 0.0,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          }}
+        >
+          {selectedLocation && (
+            <Marker
+              coordinate={selectedLocation}
+              draggable
+              onDragEnd={onMarkerDragEnd}
             />
-            <MarkerView
-              draggable={true}
-              coordinate={[selectedLocation.longitude, selectedLocation.latitude]}
-            >
-              <View style={styles.customMarker}>
-                <Icon name="map-marker" size={28} color="#376ADA" style={styles.iconLeft} />
-              </View>
-
-            </MarkerView>
-          </>
-        )}
-      </MapView> */}
+          )}
+        </MapView>
+      ) : (
+        <Loader />
+      )}
     </View>
   );
 };
@@ -172,32 +151,26 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     width: "100%",
   },
-  searchBox: {
-    backgroundColor: "#fff",
-    padding: 10,
-    borderRadius: 8,
-    zIndex: 1,
-  },
   suggestionsList: {
     position: "absolute",
-    top: 50, // Adjusted for the search bar's height
-    backgroundColor: "#fff", // White background for suggestions
-    borderRadius: 10, // Rounded corners for modern look
+    top: 50,
+    backgroundColor: "#fff",
+    borderRadius: 10,
     maxHeight: 350,
     width: "100%",
-    zIndex: 100, // Ensure it stays on top
-    elevation: 5, // Shadow for Android
-    shadowColor: "#000", // iOS shadow color
+    zIndex: 100,
+    elevation: 5,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3, // Subtle shadow
-    shadowRadius: 4, // Softer shadow edges
-    overflow: "hidden", // Hide any overflow content
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    overflow: "hidden",
   },
   placeItem: {
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
-    color: "#376ADA", // Blue text color for suggestions
+    color: "#376ADA",
     fontSize: 16,
   },
   map: {
@@ -212,13 +185,8 @@ const styles = StyleSheet.create({
     borderBottomColor: "#376ADA",
     paddingHorizontal: 10,
     marginBottom: 10,
-    color: "#376ADA", // Blue text color
+    color: "#376ADA",
   },
-  memberImage: {
-    height: 50,
-    width: 50,
-  }
 });
-
 
 export default MapSchedule;

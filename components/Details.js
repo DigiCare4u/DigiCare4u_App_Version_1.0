@@ -1,38 +1,36 @@
 import { Text, View, Image, StyleSheet, TouchableOpacity, Alert } from "react-native";
-import MoreReport from '../components/MoreReport'
+// import MoreReport from '../components/MoreReport'
 import InsightTwo from "./Member/InsightTwo";
 
 const Details = ({ decodedToken }) => {
+    
+    console.log('decodedToken====', decodedToken)
 
     return (
         <View style={styles.container}>
             {/* Main Header Container */}
-            <View style={styles.headerContainer}>
-                <Text style={styles.headerText}>Daily Insights</Text>
-            </View>
             <View style={styles.textContainer}>
-              <View>
-                <TouchableOpacity onPress={() => console.log("This is not working wait for next upgrade")}>
-                <Image
-                    source={{ uri: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' }}
-                    style={styles.profileImage}
-                />
-                </TouchableOpacity>
-              </View>
-                <Text style={styles.nameText}>{decodedToken?.data?.name}</Text>
-                <Text style={styles.employeeIdText}>
-                    <Text style={styles.nameNumber}>Number : {decodedToken?.data?.mobile}</Text></Text>
-                <Text style={styles.nameTextz}>{decodedToken?.data?.email}</Text>
-                {/* Daity report */}
-                <View style={{ marginTop: 20 }}>
+                <View>
+                    <TouchableOpacity>
+                        <Image
+                            source={{
+                                uri: decodedToken?.data?.images || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+                            }}
+                            style={styles.profileImage}
+                        />
+                    </TouchableOpacity>
                 </View>
-                <View style={styles.headerContainer}>
-                    <Text style={styles.headerText}>Running Report</Text>
 
+                <View style={{ marginHorizontal: 15 }}>
+
+                    <Text style={styles.nameText}>Name : {decodedToken?.data?.name}</Text>
+                    <Text style={styles.employeeIdText}>
+                        <Text style={styles.nameNumber}>Mobile : {decodedToken?.data?.mobile}</Text></Text>
+                    <Text style={styles.nameTextz}>Email : {decodedToken?.data?.email}</Text>
                 </View>
             </View>
             {/* <MoreReport/> */}
-            <InsightTwo/>
+            <InsightTwo />
         </View>
     );
 };
@@ -42,76 +40,34 @@ export default Details;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding:10,
-        position: "relative",
-    },
-    headerContainer: {
-        flexDirection: 'row',
-        justifyContent: 'flex-start',
-        alignItems: 'center',
         padding: 10,
     },
-    headerText: {
-        fontSize: 24,
-        color: "#376ADA",
-        fontWeight: 'bold',
-        paddingTop: 10,
-        marginLeft: 10,
-    },
-    headerContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 10,
-    },
-    headerText: {
-        fontSize: 23,
-        padding: 2,
-        fontWeight: "bold",
-        color: "#376ADA",
-    },
-    downloadButton: {
-        padding: 5,
-        borderRadius: 25,
-        height: 40, width: 40,
-    },
-    downloadButtonText: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "bold",
-    },
     profileImage: {
-        width: 70, // Adjust size as needed
-        height: 70, // Adjust size as needed
+        width: 60, // Adjust size as needed
+        height: 60, // Adjust size as needed
         borderRadius: 50, // Make it circular
-        position: "absolute", // Position it absolutely
-        left: '80%', // Center it horizontally
-        top: -10,
-
     },
     textContainer: {
         padding: 15,
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
-        borderBottomLeftRadius: 30,
-        borderBottomRightRadius: 30,
+        borderRadius: 10,
         backgroundColor: "#FFF",
-        // backgroundColor: "red",
+        flexDirection: "row",
+        justifyContent: "flex-start"
     },
     nameText: {
         fontSize: 15,
         fontWeight: 'bold',
         color: "#376ADA",
     },
-    nameNumber:{
+    nameNumber: {
         fontSize: 14,
-        fontWeight: 'bold',
-        color: "#376ADA",
+        // fontWeight: 'bold',
+        color: "#000",
     },
     nameTextz: {
         fontSize: 15,
-        fontWeight: 'bold',
-        color: "#376ADA",
+        // fontWeight: 'bold',
+        color: "#000",
     },
     employeeIdText: {
         fontSize: 16,

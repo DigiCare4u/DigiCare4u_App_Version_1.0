@@ -8,61 +8,40 @@ import {
   Image,
   RefreshControl,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {useNavigation} from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import {devURL} from '../../../../constants/endpoints';
-import ChannelSideBar from '../../../sideBar/userChannelSideBar';
+import { devURL } from '../../../../constants/endpoints';
 import Icon from 'react-native-vector-icons/AntDesign';
+import UserChannelSideBar from '../../../sideBar/userChannelSideBar';
 
-const ChannelList = (props) => {
+const ChannelList = ({ setWhichChannelIsSelected }) => {
   const navigation = useNavigation();
   const [selectedChannel, setSelectedChannel] = useState(null);
-  const [isVisibleModel, setVisibleModel] = useState(false);
   const [channelList, setChannelList] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const [selectedChannelId, setSelectedChannelId] = useState('');
+  const [isSidebarVisible, setIsSidebarVisible] = useState(false); // Sidebar visibility state
 
   const fetchChannelList = async () => {
     try {
-      setIsLoading(true);
       setIsRefreshing(true);
-
       const jwtToken = await AsyncStorage.getItem('token');
       if (!jwtToken) {
         throw new Error('Token not found');
       }
-
       const response = await axios.get(`${devURL}/channels`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${jwtToken}`,
         },
       });
-
-      console.log('Response : ', response?.data);
-
-      const channels = response?.data?.channels || [];
-      setChannelList(channels);
-      // setWhichChannelIsSelected()
-
-      // Automatically select the first channel if available
-      if (channels.length > 0) {
-        setSelectedChannelId(channels[0]._id);
-        // setSelectedChannel(channels[0]._id);
-        // props.setWhichChannelIsSelected(channels[0]._id)
-        setVisibleModel(true);
-      }
-
-      setRefreshTrigger(prev => prev + 1);
+      setChannelList(response?.data?.channels || []);
+      setSelectedChannel(response?.data?.channels[0]._id);
+      setWhichChannelIsSelected(response?.data?.channels[0]._id);
     } catch (error) {
       console.error('Error fetching channel list:', error);
     } finally {
-      setIsLoading(false);
       setIsRefreshing(false);
     }
   };
@@ -70,57 +49,57 @@ const ChannelList = (props) => {
   useEffect(() => {
     fetchChannelList();
   }, []);
-  //===========================================
 
-  const renderChannelList = ({item}) => {
-    // props.setWhichChannelIsSelected(item?._id)
-    return (
-      <TouchableOpacity
-        style={[
-          styles.memberItem,
-          selectedChannel === item?._id && styles.selectedChannel,
-        ]}
-        onPress={() => {
-          setSelectedChannelId(item?._id);
-          props.setWhichChannelIsSelected(item?._id)
-
-          setSelectedChannel(item?._id);
-          setVisibleModel(true);
-        }}>
-        <Image
-          source={{uri: item.avatar || 'https://via.placeholder.com/50'}}
-          style={styles.memberAvatar}
-        />
-        <Text style={styles.memberName}>{item.name}</Text>
-        {/* <ChannelSideBar
-          visible={isVisibleModel}
-          selectedChannelId={selectedChannelId}
-          setVisible={setVisibleModel}
-        /> */}
-      </TouchableOpacity>
-    );
-  };
+  const renderChannelList = ({ item }) => (
+    <TouchableOpacity
+      style={[
+        styles.channelItem,
+        selectedChannel === item?._id && styles.selectedChannel,
+      ]}
+      onPress={() => {
+        setSelectedChannel(item?._id);
+        setWhichChannelIsSelected(item?._id);
+      }}>
+      <Image
+        source={{ uri: item.avatar || 'https://via.placeholder.com/50' }}
+        style={styles.channelAvatar}
+      />
+      <View style={styles.channelInfo}>
+        <Text style={styles.channelName}>{item.name}</Text>
+        <Text style={styles.channelDescription}>
+          {item.description || 'No description available'}
+        </Text>
+      </View>
+      {selectedChannel === item?._id && (
+        <Icon name="checkcircle" size={20} color="#4CAF50" />
+      )}
+    </TouchableOpacity>
+  );
 
   return (
-    <SafeAreaView>
-      <View style={styles.sliderContainer}>
-        
-        <Text style={{fontSize: 10, fontWeight: '700', color: 'black'}}>
-          Channel List
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.title}>Channel List</Text>
+      <FlatList
+        data={channelList}
+        renderItem={renderChannelList}
+        keyExtractor={(item) => item._id}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={fetchChannelList} />
+        }
+      />
+      <TouchableOpacity
+        style={styles.toggleButton}
+        onPress={() => setIsSidebarVisible(!isSidebarVisible)}>
+        <Text style={styles.toggleButtonText}>
+          {isSidebarVisible ? '_' : 'Control Panel'}
         </Text>
-        <FlatList
-          data={channelList}
-          renderItem={renderChannelList}
-          keyExtractor={item => item._id}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={fetchChannelList}
-            />
-          }
-        />
-      </View>
+      </TouchableOpacity>
+      {isSidebarVisible && <UserChannelSideBar
+        visible={isSidebarVisible}
+        setVisible={setIsSidebarVisible}
+        selectedChannelId={selectedChannel}
+      />}
     </SafeAreaView>
   );
 };
@@ -128,31 +107,65 @@ const ChannelList = (props) => {
 export default ChannelList;
 
 const styles = StyleSheet.create({
-  sliderContainer: {
-    // width:"100%",
-    // backgroundColor:"red"
-  },
-  memberItem: {
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
   },
-  selectedChannel: {
-    borderWidth: 1,
-    borderColor: '#007ACC',
-    borderRadius: 5,
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+    textAlign: 'center',
   },
-  memberAvatar: {
+  channelItem: {
+    width: 100,
+    height: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FAF9F6',
+    borderRadius: 10,
+    margin: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  selectedChannel: {
+    borderColor: '#4CAF50',
+    borderWidth: 2,
+  },
+  channelAvatar: {
     width: 50,
     height: 50,
-    borderRadius: 35,
-    marginBottom: 1,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    marginTop: 5,
+    borderRadius: 25,
+    marginBottom: 10,
   },
-  memberName: {
+  channelInfo: {
+    alignItems: 'center',
+  },
+  channelName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    textAlign: 'center',
+  },
+  channelDescription: {
     fontSize: 10,
-    color: '#007ACC',
+    color: '#666',
+    textAlign: 'center',
+  },
+  toggleButton: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  toggleButtonText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });

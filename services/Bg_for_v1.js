@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef} from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,14 +8,14 @@ import {
   PermissionsAndroid,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useIsFocused} from '@react-navigation/native';
+import { useIsFocused } from '@react-navigation/native';
 import BackgroundActions from 'react-native-background-actions';
 import GetLocation from 'react-native-get-location';
 import axios from 'axios';
-import {devURL} from '../constants/endpoints';
-import {updateLocationIfNeeded_bg} from './coreTracking';
-import {getDistanceFromLatLonInMeters} from './util/distanceMatrix';
-import Mapbox, {MapView, Camera, MarkerView} from '@rnmapbox/maps';
+import { devURL } from '../constants/endpoints';
+import { updateLocationIfNeeded_bg } from './coreTracking';
+import { getDistanceFromLatLonInMeters } from './util/distanceMatrix';
+import Mapbox, { MapView, Camera, MarkerView } from '@rnmapbox/maps';
 import useFetchMember from '../hooks/useFetchMember';
 import useLocation from '../hooks/useLocation';
 
@@ -68,7 +68,7 @@ const fetchAssignments = async memberId => {
 
 //   return distance <= radius;
 // };
-const Bg_for_v1 = ({isBgAccess}) => {
+const Bg_for_v1 = ({ isBgAccess }) => {
   const [isAnyAssignmentUpdated, setIsAnyAssignmentUpdated] = useState(false);
 
   const updateAssignmentStatus = async (
@@ -211,7 +211,7 @@ const Bg_for_v1 = ({isBgAccess}) => {
   };
 
   //========================
-  const {memberProfile, fetchMemberProfile} = useFetchMember();
+  const { memberProfile, fetchMemberProfile } = useFetchMember();
 
   useEffect(() => {
     if (!memberProfile) {
@@ -334,7 +334,7 @@ const Bg_for_v1 = ({isBgAccess}) => {
         // Send live update to server
         const response = await fetch(`${devURL}/member/profile/live-update`, {
           method: 'PATCH',
-          headers: {'Content-Type': 'application/json'},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             latitude: location.latitude,
             longitude: location.longitude,
@@ -435,7 +435,7 @@ const Bg_for_v1 = ({isBgAccess}) => {
 
   return (
     <View style={styles.container}>
-      <Button
+      {/* <Button
         title={isRunning ? 'App track ho rahe hai !' : ' nahi to'}
         onPress={stopBackgroundTask}
         disabled={isRunning}
@@ -443,13 +443,13 @@ const Bg_for_v1 = ({isBgAccess}) => {
       <Button
         title={isRunning ? 'Tracking in Progress...' : 'Start Background Task'}
         onPress={startBackgroundTask}
-        // disabled={isRunning}
+        
       />
       <Button
         title={'Stop Background Task'}
         onPress={stopBackgroundTask}
-        // disabled={isRunning}
-      />
+        
+      /> */}
       {location_ && (
         <MapView style={styles.map} ref={mapRef}>
           <Camera

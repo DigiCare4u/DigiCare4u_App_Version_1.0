@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
   const IsAuthenticaticated = async (navigation) => {
     try {
       const token = await AsyncStorage.getItem('token');
-      console.log('----------- token hai ??? =-------', token);
+      // console.log('----------- token hai ??? =-------', token);
 
       if (!token) {
         navigation.navigate('Login');

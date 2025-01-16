@@ -1,207 +1,375 @@
-import React, {useEffect, useState, useRef} from 'react';
-import {View, StyleSheet, Text, TouchableOpacity, Platform} from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import MapboxGL from '@rnmapbox/maps';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
+import { TouchableOpacity, View, StyleSheet, Text, Dimensions, ScrollView, ActivityIndicator } from 'react-native';
+import MapView, { Marker, Polyline } from 'react-native-maps';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import CheckBox from '@react-native-community/checkbox';
+import { devURL } from '../constants/endpoints';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {devURL} from '../constants/endpoints';
-import InsightTwo from './User/UserTimeLineFeed';
+import axios from 'axios';
+import moment from 'moment';
 
-const accessToken =
-  'sk.eyJ1IjoicHJvZGV2MzY5IiwiYSI6ImNtM21vaHppbzB5azQycXF6MTJyZjJuamcifQ.ZnpKclc0DrYzGN1fA1jqNQ'; // Replace with your Mapbox token
-MapboxGL.setAccessToken(accessToken); // Replace with your Mapbox token
+const { width, height } = Dimensions.get('window');
 
-const LiveTrackingMap = ({
-  selectedMmeberId,
-  selectedDate_,
-  transitMemberData,
-}) => {
-  const [loca_, setLoca_] = useState([]);
+const LiveTrackingMap = ({ selectedMmeberId, selectedDate_, }) => {
+  const formatDate = (dateString) => {
+    const date = new Date(dateString); // Parse the input date string
+    const year = date.getFullYear(); // Extract the year
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Extract the month (0-based index) and pad with leading zero
+    const day = String(date.getDate()).padStart(2, '0'); // Extract the day and pad with leading zero
+    return `${year}-${month}-${day}`; // Combine into the desired format
+  };
+
+
+
+  // console.log('selectedDate_',selectedDate_);
+  const [memberLiveTrackingData, setMemberLiveTrackingData] = useState([]);
+  const [memberLiveTrackingReocirds, setMemberLiveTrackingRecords] = useState([]);
+
+  const [transitMemberData, setTransitMemberData] = useState([]);
+  const [transitMemberCoordinatesData, setTransitMemberCoordinatesData] = useState([]);
+  const [memberAssignmentDetails, setMemberAssignmentDetail] = useState([]);
 
   const fetchDailyLocations = async () => {
     try {
       const jwtToken = await AsyncStorage.getItem('token');
+      setLoading(true);
+
       const response = await axios.get(
-        `${devURL}/user/members/${selectedMmeberId}/daily-transit?date=${selectedDate_}`,
+        `${devURL}/user/members/assignment-location-tracking/${selectedMmeberId}/${formatDate(selectedDate_)}`,
         {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${jwtToken}`,
+            'Authorization': `Bearer ${jwtToken}`,
           },
-        },
+        }
       );
-      //   console.log('resp____________==', response.data.data[0].locations);
-      setLoca_(response.data.data[0].locations);
 
-      //   setTimelineData(response?.data?.data); // Set fetched data to state
-      // console.log('response?.data?.data',response?.data?.data);
 
-      //   setTransitMemberData(response?.data?.data);
+      // const coordinates = response?.data?.assignmentDetails?.map(loc => loc.location.coordinates);
+      const eventDetails = response?.data?.assignmentDetails?.map(item => ({
+        id: item.assignmentId?._id || 'Unknown ID', // Extract ID with a fallback
+        name: item.assignmentId?.eventName || 'Unnamed Event', // Extract name with a fallback
+      }));
+
+      // console.log('Event Details:', eventDetails);
+      // console.log('---------------', response?.data?.assignmentDetails);
+      setMemberAssignmentDetail(response?.data?.assignmentDetails)
+      // setTransitMemberCoordinatesData(coordinates)
+      const locations = response.data.data[0]?.locations || [];
+      setTransitMemberData(locations);
     } catch (error) {
-      console.error('Error fetching locations==:', error);
+      console.log('Fetch canceled:', error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchDailyLocations();
-  }, [selectedMmeberId, selectedDate_]); // Fetch data on channel or date change
+  }, [selectedMmeberId, selectedDate_]);
 
-  // let today = new Date().toISOString().split('T')[0]
 
-  //   console.log(
-  //     'transitMemberData_______________',
-  //     transitMemberData[0]?.locations,
-  //   );
 
-  const [locations, setLocations] = useState([]);
-  const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  // console.log('date',date);
 
-  // const fetchDailyLocations = async (selectedDate) => {
-  //     try {
+  const [isCheckedMarked, setIsCheckedMarked] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  //         const jwtToken = await AsyncStorage.getItem('token');
+  const [region, setRegion] = useState({
+    latitude: transitMemberData?.length > 0 ? transitMemberData[0][1] : 26.8506406,
+    longitude: transitMemberData?.length > 0 ? transitMemberData[0][0] : 80.9753135,
+    latitudeDelta: 0.09,
+    longitudeDelta: 0.09,
+  });
 
-  //         const response = await axios.get( `${devURL}/user/members/${memberId}/daily-transit?date=${date}`, {
-  //             headers: {
-  //                 'Content-Type': 'application/json',
-  //                 Authorization: `Bearer ${jwtToken}`,
-  //             },
-  //             params: {
-  //                 date: selectedDate.toISOString().split('T')[0],
-  //             },
-  //         });
-  //         console.log('----------response:', response.data);
+  const fetchLiveTrackingData = async () => {
+    setLoading(true);
+    try {
+      const jwtToken = await AsyncStorage.getItem('token');
 
-  //         const locationData = response?.data?.data;
-  //         // console.log('----------locationData:', locationData);
-  //         if (locationData?.length > 0) {
-  //             setLocations(locationData);
-  //         }
-  //     } catch (error) {
-  //         console.error('Error fetching locations:', error);
-  //     }
-  // };
+      if (!jwtToken) {
+        console.error('No token found');
+        setLoading(false);
+        return;
+      }
 
-  // useEffect(() => {
-  //     fetchDailyLocations(date);
-  // }, [date]);
+      const response = await axios.get(
+        `${devURL}/user/members/live-location-tracking/${selectedMmeberId}/${formatDate(selectedDate_)}`, // Updated URL
+        {
 
-  const onDateChange = (event, selectedDate) => {
-    const currentDate = selectedDate || date;
-    setShowDatePicker(Platform.OS === 'ios');
-    setDate(currentDate);
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${jwtToken}`, // Add token in the Authorization header
+          },
+        }
+      );
+// console.log('response',response.status);
+
+
+      // const data = await response.json();
+      // const coordinates = response?.data?.liveLocation?.map(loc => loc.location.coordinates);
+      let coord = []
+      if (response.status == 200) {
+        const coordinates = response?.data?.liveLocation?.map(loc => {
+
+          return (
+            coord.push(loc.coordinates)
+          )
+        });
+        // console.log('_____________ Live coordinates ___________________', coordinates);
+        setMemberLiveTrackingRecords(response?.data?.liveLocation) // Assuming 'liveLocation' contains the required data
+        // setMemberLiveTrackingData(response?.data?.liveLocation); // Assuming 'liveLocation' contains the required data
+      } else {
+        console.error('Live tracking data not found:', data.error);
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching live tracking data:', error);
+      setLoading(false);
+    }
   };
 
-  const getCoordinates = () =>
-    locations?.map(loc => [
-      loc?.location?.coordinates[0],
-      loc?.location?.coordinates[1],
-    ]);
-  // console.log('=============ggg=======================');
-  // console.log(loca_);
-  // console.log('====================================');
+  const sampleLocations = (locations) => {
+    const maxPoints = 25;
+    const totalPoints = locations.length;
+    if (totalPoints <= maxPoints) return locations;
+    const step = Math.ceil(totalPoints / maxPoints);
+    return locations.filter((_, index) => index % step === 0);
+  };
+
+  useEffect(() => {
+    if (isCheckedMarked) {
+      fetchLiveTrackingData();
+    }
+  }, [isCheckedMarked,]);
+
+
+
+  // useEffect(() => {
+  //   if (memberLiveTrackingReocirds?.length > 0) {
+  //     const firstLocation = memberLiveTrackingReocirds[0];
+  //     setRegion({
+  //       latitude: firstLocation[0],
+  //       longitude: firstLocation[1],
+  //       latitudeDelta: 0.02,
+  //       longitudeDelta: 0.02,
+  //     });
+  //   }
+
+  // }, [selectedMmeberId]);
+
+  useEffect(() => {
+    if (memberLiveTrackingReocirds && memberLiveTrackingReocirds?.length > 0) {
+
+      const firstLocation = memberLiveTrackingReocirds[0];
+          console.log('firstLocation:', memberLiveTrackingReocirds);
+
+      setRegion({
+        latitude: firstLocation?.coordinates[0],
+        longitude: firstLocation?.coordinates[1],
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02,
+      });
+    }
+  }, [selectedMmeberId,selectedDate_]);
+
+
+
+  // console.log('Assigenemnt traking data :', transitMemberCoordinatesData[0]);
+  // console.log('Live traking data', memberLiveTrackingData[0]);
+  console.log('memberLiveTrackingReocirds', memberLiveTrackingReocirds[0]);
+
+
   return (
-    <View>
-      <View style={styles.container}>
-        {/* <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateButton}>
-                <Text style={styles.dateButtonText}>Select Date</Text>
-            </TouchableOpacity> */}
+    <View style={styles.container}>
+      <View style={styles.checkboxContainer}>
+        <CheckBox
+          value={isCheckedMarked}
+          onValueChange={setIsCheckedMarked}
+        />
+        <Text style={styles.checkboxLabel}>Live Tracking</Text>
+        <Icon
+          name="refresh" // Material Icons name for a refresh icon
+          size={24}
+          color="#007AFF"
+          onPress={fetchLiveTrackingData} // Call the function when the icon is pressed
+          style={styles.refreshIcon}
+        />
+      </View>
 
-        {/* {showDatePicker && (
-                <DateTimePicker
-                    value={date}
-                    mode="date"
-                    display="default"
-                    onChange={onDateChange}
-                />
-            )} */}
+      {/* ----------- tags like UI to show assignemnts names (memberAssignmentDetails array) ---------------- */}
 
-        {transitMemberData ? (
-          <MapboxGL.MapView style={styles.map}>
-            {/* <MapboxGL.Camera
-              zoomLevel={14}
-              centerCoordinate={
-                transitMemberData.length
-                  ? [transitMemberData[0][0], transitMemberData[0][1]] // Set initial center
-                  : [-122.4324, 37.78825]
-              }
-            /> */}
-            <MapboxGL.Camera
-              zoomLevel={14}
-              centerCoordinate={
-                loca_.length > 0
-                  ? [loca_[0][0], loca_[0][1]] // Use the first location in loca_ for the initial center
-                  : [-122.4324, 37.78825]
-              }
-            />
 
-            {loca_?.map((location, index) => {
-              console.log('-fffff', location[1], location[0]);
+      {/* import { ScrollView, TouchableOpacity } from 'react-native'; */}
+      {!isCheckedMarked ? (
+
+        <View style={styles.tagsContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {(() => {
+              // console.log('memberAssignmentDetails:', memberAssignmentDetails);
+              return (memberAssignmentDetails || []).length > 0 ? (
+                (memberAssignmentDetails || []).map((detail, index) => (
+
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.tag}
+                    onPress={() => {
+                      console.log(`Clicked on assignment: `, detail.trackingCoordinates);
+                      const assignmentCoordinates = detail.trackingCoordinates[0];
+
+                      setTransitMemberCoordinatesData(detail.trackingCoordinates)
+
+                      if (assignmentCoordinates) {
+                        setRegion({
+                          latitude: assignmentCoordinates[0],
+                          longitude: assignmentCoordinates[1],
+                          latitudeDelta: 0.02,
+                          longitudeDelta: 0.02,
+                        });
+                      } else {
+                        console.error(`No coordinates available for assignment: ${detail.eventName}`);
+                      }
+                    }}
+                  >
+                    <Text style={styles.tagText}>{detail.eventName || 'Unnamed Assignment'}</Text>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={styles.noAssignmentText}>No assignments available</Text>
+              );
+            })()}
+          </ScrollView>
+        </View>
+      ) : null}
+
+
+
+
+      {loading ? (
+        <ActivityIndicator size="large" color="#007AFF" />
+      ) : isCheckedMarked ? (
+        memberLiveTrackingReocirds?.length > 0 ? (
+          <MapView style={styles.map} region={region}>
+            {(memberLiveTrackingReocirds).map((location, index) => {
+              // console.log('location --------------->', location);
 
               return (
-                <MapboxGL.PointAnnotation
+                <Marker
                   key={index}
-                  id={`marker-${index}`}
-                  coordinate={[location[0], location[1]]} // Longitude and Latitude
+                  coordinate={{
+                    latitude: location?.coordinates[0],
+                    longitude: location?.coordinates[1],
+                  }}
+                  title={`${location.locality} @ ${ moment(location.timestamp).format('h:mm A')}`}
                 >
-                  <View style={styles.marker}>
-                    <Text style={styles.markerText}>{index + 1}</Text>
-                  </View>
-                </MapboxGL.PointAnnotation>
-              );
+                  <Icon name="flag" size={24} color="#007AFF" />
+                </Marker>
+              )
             })}
-
-
-            
-          </MapboxGL.MapView>
-        ) : null}
-      </View>
-      <InsightTwo />
+            <Polyline
+              coordinates={memberLiveTrackingReocirds.map((location) => ({
+                latitude: location?.coordinates[0],
+                longitude: location?.coordinates[1],
+              }))}
+              strokeWidth={2}
+              strokeColor="red"
+            />
+          </MapView>
+        ) : (
+          <Text>No live tracking data available</Text>
+        )
+      ) : (
+        transitMemberCoordinatesData?.length > 0 ? (
+          <MapView style={styles.map} region={region}>
+            {(transitMemberCoordinatesData).map((location, index) => (
+              <Marker
+                key={index}
+                coordinate={{
+                  latitude: location[0],
+                  longitude: location[1],
+                }}
+                title={`Transit Point ${index + 1}`}
+              >
+                <Icon name="flag" size={24} color="#007AFF" />
+              </Marker>
+            ))}
+            <Polyline
+              coordinates={transitMemberCoordinatesData.map((location) => ({
+                latitude: location[0],
+                longitude: location[1],
+              }))}
+              strokeWidth={2}
+              strokeColor="red"
+            />
+          </MapView>
+        ) : (
+          <Text>No transit data available</Text>
+        )
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 5,
+    flex: 1,
+    padding: 10,
   },
-  map: {
-    height: 400, // Adjust as needed
-    marginTop: 20,
-  },
-  dateButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
+  checkboxContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.25,
-    shadowRadius: 3.5,
-    elevation: 5,
+    marginBottom: 10,
   },
-  dateButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+  checkboxLabel: {
+    marginLeft: 8,
     fontSize: 16,
   },
-  marker: {
-    backgroundColor: '#007AFF',
-    padding: 5,
-    borderRadius: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
+  map: {
+    height: height * 0.6,
+    width: width - 20,
   },
-  markerText: {
-    color: '#fff',
+  container: {
+    flex: 1,
+    padding: 10,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  checkboxLabel: {
+    marginLeft: 8,
+    fontSize: 16,
+  },
+  map: {
+    height: height * 0.6,
+    width: width - 20,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 10,
+  },
+  tag: {
+    backgroundColor: '#007AFF',
+    borderRadius: 15,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  tagText: {
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: 'bold',
   },
-  routeLine: {
-    lineWidth: 3,
-    lineColor: '#007AFF',
+  noAssignmentText: {
+    color: '#555555',
+    fontSize: 14,
+  },
+  refreshIcon: {
+    marginLeft: 10, // Adjust for spacing
+    padding: 5,     // Add touchable padding for better UX
   },
 });
 

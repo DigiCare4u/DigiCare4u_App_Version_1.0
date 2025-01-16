@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   SafeAreaView,
   View,
@@ -12,8 +12,8 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome';
 import TeamMembersModel from '../../../components/Modal/MembersTeamsModel';
 import Places from '../../../components/places';
-import Mapbox, {MapView, Camera, MarkerView} from '@rnmapbox/maps';
-// import MapView, { Marker } from 'react-native-maps';
+// import Mapbox, { MapView, Camera, MarkerView } from '@rnmapbox/maps';
+import MapView, { Marker } from 'react-native-maps';
 import useLocation from '../../../hooks/useLocation';
 import Loader from '../../../components/Loader';
 import useFetchMember from '../../../hooks/useFetchMember';
@@ -26,35 +26,10 @@ import {
   formatDuration,
   getDistanceFromLatLonInMeters,
 } from '../../../services/util/distanceMatrix';
-import {devURL, mapBoxAccessToken} from '../../../constants/endpoints';
-import {updateLocationOnDisplacement} from '../services/coreTracking';
+import { devURL, mapBoxAccessToken } from '../../../constants/endpoints';
+import { updateLocationOnDisplacement } from '../services/coreTracking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {getAddressFromCoordinates_v1} from '../../../services/util/geoCoding';
-// import MySvgComponent from "../SVGmarker";
-
-// const { socket } = useSocket;
-
-// console.log('=======MemberMap==========')
-// console.log(socket)
-
-// function formatDistance(distanceInMeters) {
-//   if (distanceInMeters >= 1000) {
-//     return `${(distanceInMeters / 1000).toFixed(2)} km`;
-//   }
-//   return `${distanceInMeters} meters`;
-// }
-
-// function formatDuration(durationInSeconds) {
-//   const hours = Math.floor(durationInSeconds / 3600);
-//   const minutes = Math.floor((durationInSeconds % 3600) / 60);
-
-//   if (hours > 0) {
-//     return `${hours} hour${hours > 1 ? 's' : ''} ${minutes} minute${
-//       minutes > 1 ? 's' : ''
-//     }`;
-//   }
-//   return `${minutes} minute${minutes > 1 ? 's' : ''}`;
-// }
+import { getAddressFromCoordinates_v1 } from '../../../services/util/geoCoding';
 
 export default function MemberHome() {
   const [locationDetails, setLocationDetails] = useState({
@@ -124,10 +99,11 @@ export default function MemberHome() {
 
   //======================================
 
-  const {fetchTeamMembers, teamMember, memberProfile, fetchMemberProfile} =
+  const { fetchTeamMembers, teamMember, memberProfile, fetchMemberProfile } =
     useFetchMember();
 
   const [teamData, setTeamData] = useState([]);
+// console.log('teamMember',teamMember[0]);
 
   const fetchLocalities = async () => {
     // console.log('fetchLocalities started :');
@@ -140,7 +116,7 @@ export default function MemberHome() {
 
     const localityPromises = teamMember?.map(async member => {
       try {
-        const {coordinates} = member?.location || {};
+        const { coordinates } = member?.location || {};
         if (!coordinates) throw new Error('Missing coordinates');
 
         const [latitude, longitude] = coordinates;
@@ -166,7 +142,7 @@ export default function MemberHome() {
         // let address = response?.data?.features[0]?.properties?.context?.locality?.name
         let duration = response_1?.data?.routes[0]?.duration;
         let distance = response_1?.data?.routes[0]?.distance;
-        let eta = {distance, duration};
+        let eta = { distance, duration };
         // console.log('eta ----', eta);
 
         data.push({
@@ -175,7 +151,7 @@ export default function MemberHome() {
           eta,
         });
       } catch (error) {
-        console.error(`Error fetching locality for ${member?.name}:`, error);
+        // console.error(`Error fetching locality for ${member?.name}:`, error);
         data.push({
           ...member,
           currentLocality: 'Error Fetching Locality',
@@ -188,7 +164,7 @@ export default function MemberHome() {
     // setIsFetching(false);
   };
 
-  const {location, getCurrentLocation} = useLocation();
+  const { location, getCurrentLocation } = useLocation();
 
   const [isModalVisible, setModalVisible] = useState(false);
   const mapRef = useRef(null);
@@ -307,16 +283,16 @@ export default function MemberHome() {
             },
           },
         );
-        console.log('API Response_________:', response.status, {
-          latitude: location?.latitude,
-          longitude: location?.longitude,
-          locationDetails,
-        });
+        // console.log('API Response_________:', response.status, {
+        //   latitude: location?.latitude,
+        //   longitude: location?.longitude,
+        //   locationDetails,
+        // });
       } catch (error) {
-        console.error(
-          'API Error:',
-          error.response ? error.response.data : error.message,
-        );
+        // console.error(
+        //   'API Error:',
+        //   error.response ? error.response.data : error.message,
+        // );
       }
     }
     // await updateLocationOnDisplacement(location);
@@ -329,7 +305,7 @@ export default function MemberHome() {
     }
   }, [location]);
 
-  console.log('eta___', eta);
+  // console.log('eta___', eta);
 
   // onEvent(`SOS_member_${id_}`, data => {
   //   console.log(data);
@@ -339,92 +315,134 @@ export default function MemberHome() {
 
   //=============================================
 
+
+
   return (
     <SafeAreaView style={styles.container}>
+
+
+
       {location && teamData ? (
-        <MapView ref={mapRef} style={styles.map}>
-          <Camera
+        <>
+
+          <MapView
+            region={{
+              latitude: location?.latitude, // Initial latitude from location data
+              longitude: location?.longitude, // Initial longitude from location data
+              latitudeDelta: 0.0922, // Adjust zoom level
+              longitudeDelta: 0.0421,
+            }}
+            // onRegionChangeComplete={onRegionChange}
+            style={styles.map}
+          >
+            <Marker
+              key={'uniqueKey'}
+              coordinate={{
+                latitude: location?.latitude,
+                longitude: location?.longitude,
+              }}
+              title={'Your Location'}
+              description={`Accuracy: 20 meters`}
+            />
+          </MapView>
+
+          <MapView ref={mapRef} style={styles.map}>
+            {/* <Camera
             zoomLevel={14}
             centerCoordinate={[
               location ? location.longitude : 0.0,
               location ? location.latitude : 0.0,
             ]}
-          />
+          /> */}
 
-          <MarkerView
-            allowOverlap={true}
-            coordinate={[
-              location?.longitude, // longitude
-              location?.latitude, // latitude
-            ]}>
-            <View style={styles.customMarker}>
-              <Icon name="map-marker" size={55} color="green" />
-            </View>
-          </MarkerView>
+            {/* <MarkerView
+              allowOverlap={true}
+              coordinate={[
+                location?.longitude, // longitude
+                location?.latitude, // latitude
+              ]}>
+              <View style={styles.customMarker}>
+                <Icon name="map-marker" size={55} color="green" />
+              </View>
+            </MarkerView> */}
 
-          {/* Render markers for user members */}
-          {teamData?.map((member, index) => {
-            // console.log('_______________teams : ', member?.eta);
-            // const currentLocality = await getAddressFromCoordinates_teams([member?.location.coordinates[1],member?.location.coordinates[0]])
-            return (
-              <MarkerView
-                allowOverlap={true}
-                key={index}
-                coordinate={[
-                  member?.location ? member?.location?.coordinates[1] : 0.0, // longitude
-                  member?.location ? member?.location?.coordinates[0] : 0.0, // latitude
-                ]}>
-                <View
-                // style={styles.markerInfo}
-                >
-                  {/* <Button
-                    style={styles.markerTitle}
-                    title={`Name : ${member?.name} 
-Address : ${member?.currentLocality} 
-Total Distance : ${formatDistance(member?.eta?.distance)}, 
-Total Time : ${formatDuration(member?.eta?.duration)}`}
-                  /> */}
+            {/* {teamData?.map((member, index) => {
+              return (
+                <MarkerView
+                  allowOverlap={true}
+                  key={index}
+                  coordinate={[
+                    member?.location ? member?.location?.coordinates[1] : 0.0, // longitude
+                    member?.location ? member?.location?.coordinates[0] : 0.0, // latitude
+                  ]}>
                   <View
-                    style={{
-                      backgroundColor: '#fff',
-                      padding: 10,
-                      borderRadius: 10,
-                    }}
-                    onPress={() => {
-                      console.log('Marker pressed:', member?.name);
-                    }}>
-                    <Text style={{color: 'blue'}}>
-                      {`Name: ${member?.name}\nAddress: ${
-                        member?.currentLocality
-                      }\nTotal Distance: ${formatDistance(
-                        member?.eta?.distance,
-                      )}\nTotal Time: ${formatDuration(member?.eta?.duration)}`}
-                    </Text>
-                    {/* <TouchableOpacity
-                    onPress={()=>console.log('clicked')}
-                    >
-                      <View style={{backgroundColor:"blue", padding:5, borderRadius:10,marginTop:5}}>
-                        <Text style={{textAlign:"center"}}>View Assignment</Text>
-                      </View>
-                    </TouchableOpacity> */}
+                  >
+                    
+                    <View
+                      style={{
+                        backgroundColor: '#fff',
+                        padding: 10,
+                        borderRadius: 10,
+                      }}
+                      onPress={() => {
+                        console.log('Marker pressed:', member?.name);
+                      }}>
+                      <Text style={{ color: 'blue' }}>
+                        {`Name: ${member?.name}\nAddress: ${member?.currentLocality
+                          }\nTotal Distance: ${formatDistance(
+                            member?.eta?.distance,
+                          )}\nTotal Time: ${formatDuration(member?.eta?.duration)}`}
+                      </Text>
+                      
+                    </View>
                   </View>
-                </View>
-                <View style={styles.customMarker}>
-                  {/* <MySvgComponent /> */}
-                  <Icon
-                    name="map-marker"
-                    size={50}
-                    color="#376ADA"
-                    style={styles.iconLeft}
-                  />
-                </View>
-              </MarkerView>
-            );
-          })}
-        </MapView>
+                  <View style={styles.customMarker}>
+                    <Icon
+                      name="map-marker"
+                      size={50}
+                      color="#376ADA"
+                      style={styles.iconLeft}
+                    />
+                  </View>
+                </MarkerView>
+              )
+            })} */}
+
+            {teamData?.map((member, index) => {
+              const longitude = member?.location?.coordinates[1] || 0.0;
+              const latitude = member?.location?.coordinates[0] || 0.0;
+              // console.log('dd', longitude);
+
+              return (
+                <Marker
+                  key={index}
+                  coordinate={{ latitude, longitude }}
+                  title={member?.name}
+                  description={`Address: ${member?.currentLocality}\nDistance: ${formatDistance(
+                    member?.eta?.distance
+                  )}\nTime: ${formatDuration(member?.eta?.duration)}`}
+                  onPress={() => {
+                    console.log('Marker pressed:', member?.name);
+                  }}
+                >
+                  {/* <View style={styles.customMarker}>
+                    <Icon
+                      name="map-marker"
+                      size={50}
+                      color="#376ADA"
+                      style={styles.iconLeft}
+                    />
+                  </View> */}
+                </Marker>
+              );
+            })}
+          </MapView>
+        </>
       ) : (
         <Loader />
-      )}
+
+      )
+      }
 
       <View style={styles.searchBarWrapper}>
         <View style={styles.searchBarContainer}>
@@ -432,7 +450,7 @@ Total Time : ${formatDuration(member?.eta?.duration)}`}
             onPress={toggleModal}
             style={styles.menuIconContainer}>
             <Icon name="user-circle-o" size={28} color="#376ADA" />
-            <Text style={{fontSize: 10, color: '#376ADA'}}>Teams</Text>
+            <Text style={{ fontSize: 10, color: '#376ADA' }}>Teams</Text>
           </TouchableOpacity>
           <View style={styles.searchBar}>
             <Icon
@@ -506,7 +524,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     elevation: 5,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
@@ -578,7 +596,7 @@ const styles = StyleSheet.create({
     height: 50,
     width: 50,
     shadowColor: '#376ADA',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     elevation: 2,
     position: 'absolute', // Use absolute positioning to place the button

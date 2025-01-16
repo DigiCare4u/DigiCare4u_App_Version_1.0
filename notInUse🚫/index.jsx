@@ -1,57 +1,103 @@
-import React from 'react';
-import { SafeAreaView, StyleSheet } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import {StyleSheet, Text, View, TouchableOpacity} from 'react-native';
+import React, {useState} from 'react';
+import MoreReport from '../../../components/MoreReport';
+import Chart from '../../../components/Chart';
+import Goback from '../../../components/GoBack';
+import Calender from '../../../components/Member/Calender';
+import Assinement from '../../../components/Member/Assinement';
 
-function LucknowMapWithMarkers() {
-  const places = [
-    {
-      name: 'Bara Imambara',
-      description: 'Historical monument in Lucknow',
-      coordinates: { latitude: 26.8691, longitude: 80.9126 },
-    },
-    {
-      name: 'Hazratganj',
-      description: 'Famous shopping area',
-      coordinates: { latitude: 26.8486, longitude: 80.9432 },
-    },
-    {
-      name: 'Rumi Darwaza',
-      description: 'Iconic gateway in Lucknow',
-      coordinates: { latitude: 26.8699, longitude: 80.9124 },
-    },
-  ];
+const MemberInsight = ({decodedToken}) => {
+  // console.log('====details===')
+  // console.log(decodedToken)
 
   return (
-    <SafeAreaView style={styles.container}>
-      <MapView
-        style={styles.map}
-        initialRegion={{
-          latitude: 26.8467,
-          longitude: 80.9462,
-          latitudeDelta: 0.1,
-          longitudeDelta: 0.1,
-        }}
-      >
-        {places.map((place, index) => (
-          <Marker
-            key={index}
-            coordinate={place.coordinates}
-            title={place.name}
-            description={place.description}
-          />
-        ))}
-      </MapView>
-    </SafeAreaView>
+    <View style={{flex: 1, padding: 10}}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
+        <Goback />
+        <Text
+          style={{
+            color: '#376ADA',
+            fontSize: 26,
+            fontWeight: '700',
+            marginRight: 19,
+          }}>
+          Insights
+        </Text>
+      </View>
+      <Calender />
+      {/* <Assinement /> */}
+
+      {/* <View style={styles.mainContainer}>
+        <Chart />
+        <View style={styles.tabContainer}>
+          {["Day", "Week", "Month", "Year"].map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={[
+                styles.tab,
+                activeTab === tab && styles.activeTab,
+              ]}
+              onPress={() => setActiveTab(tab)}
+            >
+              <Text style={[
+                styles.tabText,
+                activeTab === tab && styles.activeTabText
+              ]}>
+                {tab}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View>
+          <MoreReport decodedToken={decodedToken} />
+        </View>
+      </View> */}
+    </View>
   );
-}
+};
+
+export default MemberInsight;
 
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     flex: 1,
+    //  backgroundColor:"green"
   },
-  map: {
+  tabContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    //  backgroundColor:"black"
+  },
+  tab: {
     flex: 1,
+    padding: 10,
+    alignItems: 'center',
+    borderRadius: 5,
+    backgroundColor: '#e0e0e0',
+    marginRight: 4,
+  },
+  activeTab: {
+    backgroundColor: '#376ADA',
+  },
+  tabText: {
+    fontSize: 16,
+    color: '#000',
+  },
+  activeTabText: {
+    color: '#fff',
+  },
+  contentContainer: {
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#376ADA',
+    borderRadius: 10,
+  },
+  contentText: {
+    fontSize: 18,
   },
 });
-
-export default LucknowMapWithMarkers;

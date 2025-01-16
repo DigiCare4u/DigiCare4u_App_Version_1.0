@@ -7,10 +7,11 @@ import {
   Image,
   TouchableOpacity,
   Button,
+  Text,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Places from '../../../components/places';
-import Mapbox, {MapView, Camera, MarkerView} from '@rnmapbox/maps';
+import Mapbox from '@rnmapbox/maps';
 import useLocation from '../../../hooks/useLocation';
 import Loader from '../../../components/Loader';
 import useFetchUser from '../../../hooks/useFetchUser';
@@ -18,6 +19,10 @@ import axios from 'axios';
 import UserMembersModal from '../../../components/Modal/UsersMemberModel';
 import {onEvent} from '../../../services/socket/config';
 import {MemberVerifiedNotification} from '../../../notificationTemplates/memberVerified';
+import MapView, {Marker, Callout} from 'react-native-maps';
+import {devURL} from '../../../constants/endpoints';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import moment from 'moment';
 
 const accessToken =
   'sk.eyJ1IjoicHJvZGV2MzY5IiwiYSI6ImNtM21vaHppbzB5azQycXF6MTJyZjJuamcifQ.ZnpKclc0DrYzGN1fA1jqNQ'; // Replace with your Mapbox token
@@ -45,60 +50,10 @@ function formatDuration(durationInSeconds) {
 }
 
 export default function UserHome() {
-  // const socket = useSocket();
-  // const {memberVerifiedNotification,} = useNotification(socket);
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
 
-  // const displayNotification_ = async notification => {
-  //   try {
-  //     // Request permissions (required for iOS)
-  //     console.log(
-  //       'notification___________lenght',
-  //       notification,
-  //       notification.length,
-  //     );
-  //     const length = Object.keys(notification).length;
-  //     // console.log('len ----->',length); // Output: 3
-
-  //     if (length <= 0) {
-  //       return;
-  //     }
-  //     await notifee.requestPermission();
-
-  //     // Create a channel (required for Android)
-  //     const channelId = await notifee.createChannel({
-  //       id: 'default',
-  //       name: 'Default Channel',
-  //       sound: 'congrat', // Use the file name from your raw folder
-
-  //       importance: AndroidImportance.HIGH,
-  //     });
-
-  //     // Display a notification
-  //     await notifee.displayNotification({
-  //       title: notification.title || 'Member Verified !',
-  //       body: notification.message || 'You have a new message.',
-  //       android: {
-  //         channelId,
-  //         smallIcon: 'ic_launcher', // Replace with your notification icon
-  //         pressAction: {
-  //           id: 'default',
-  //         },
-  //       },
-  //     });
-  //   } catch (error) {
-  //     console.error('Notification Error:', error);
-  //   }
-  // };
-
-  useEffect(() => {
-    onEvent('onMemberVerified', data => {
-      MemberVerifiedNotification(data);
-    });
-  }, []);
-
-  // console.log('notification:', notifications.message);
-
-  //===================================
   const [locationDetails, setLocationDetails] = useState({
     preferredAddress: null,
     address: null,
@@ -111,219 +66,198 @@ export default function UserHome() {
     country: null,
   });
 
-  const getAddressFromCoordinates = async ([longitude, latitude]) => {
-    // console.log('latitude aaya____________ : ', latitude);
-    const accessToken =
-      'sk.eyJ1IjoicHJvZGV2MzY5IiwiYSI6ImNtM21vaHppbzB5azQycXF6MTJyZjJuamcifQ.ZnpKclc0DrYzGN1fA1jqNQ'; // Replace with your Mapbox token
-    const url = `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${longitude}&latitude=${latitude}&access_token=${accessToken}&limit=1`;
-
-    try {
-      const response = await axios.get(url);
-      // console.log('response ________________ : ',response.data.features[0].properties.full_address);
-      // console.log('response ________________ : ', response?.data?.features[0]?.properties?.context?.locality?.name);
-
-      // if (response.data && response.data.features.length > 0) {
-      if (response.data) {
-        // setCountry(response.data.features[0].properties.context.country.name);
-        setLocationDetails(prevState => ({
-          ...prevState,
-          preferredAddress:
-            response.data?.features[0]?.properties?.name_preferred || null,
-          address:
-            response.data?.features[0]?.properties?.place_formatted || null,
-          street:
-            response.data?.features[0]?.properties?.context?.street?.name ||
-            null,
-          neighborhood:
-            response.data?.features[0]?.properties?.context?.neighborhood
-              ?.name || 'Not Found',
-          postcode:
-            response.data?.features[0]?.properties?.context?.postcode?.name ||
-            null,
-          locality:
-            response.data?.features[0]?.properties?.context?.locality?.name ||
-            '',
-          district:
-            response.data?.features[0]?.properties?.context?.district?.name ||
-            null,
-          region:
-            response.data?.features[0]?.properties?.context?.region?.name ||
-            null,
-          country:
-            response.data?.features[0]?.properties?.context?.country?.name ||
-            null,
-        }));
-      } else {
-        setAddress('Address not found');
-      }
-    } catch (error) {
-      console.error('Error fetching address:', error);
-      setAddress('Error fetching address');
-    }
-  };
-
-  //======================================
-  const {userMembersList, fetchUserMembersList} = useFetchUser();
   const [teamData, setTeamData] = useState([]);
-
-  const fetchLocalities = async () => {
-    // setIsFetching(true);
-    const data = [];
-
-    // Replace with actual team member data fetching logic
-    // const userMembersList = []; // Assume userMembersList is available here
-
-    const localityPromises = userMembersList?.map(async member => {
-      try {
-        console.log('fetchLocalities ------------ :');
-        const {coordinates} = member?.location || {};
-        if (!coordinates) throw new Error('Missing coordinates');
-
-        const [latitude, longitude] = coordinates;
-        // const accessToken = accessToken; // Replace with your Mapbox token
-        const url = `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${longitude}&latitude=${latitude}&access_token=${accessToken}&limit=1`;
-
-        const response = await axios.get(url);
-        const currentLocality =
-          response?.data?.features[0]?.properties?.context.locality?.name ||
-          'Not Found';
-
-        // console.log('latitude, longitude===', latitude, longitude);
-
-        // const accessToken = 'sk.eyJ1IjoicHJvZGV2MzY5IiwiYSI6ImNtM21vaHppbzB5azQycXF6MTJyZjJuamcifQ.ZnpKclc0DrYzGN1fA1jqNQ'; // Replace with your Mapbox token
-        // const url = `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${longitude}&latitude=${latitude}&access_token=${accessToken}&limit=1`;
-        const url_1 = `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${longitude},${latitude};${location?.longitude},${location?.latitude}?access_token=${accessToken}`;
-
-        const response_1 = await axios.get(url_1);
-        // console.log('response --------------', response_1.data.routes[0].duration);
-        // console.log(' ETA :  -___________ : ', response_1.data.routes[0].distance);
-
-        // let address = response?.data?.features[0]?.properties?.context?.locality?.name
-        let duration = response_1?.data?.routes[0]?.duration;
-        let distance = response_1?.data?.routes[0]?.distance;
-        let eta = {distance, duration};
-        // console.log('eta ----', eta);
-
-        data.push({
-          ...member,
-          currentLocality,
-          eta,
-        });
-      } catch (error) {
-        console.error(`Error fetching locality for ${member?.name}:`, error);
-        data.push({
-          ...member,
-          currentLocality: 'Error Fetching Locality',
-        });
-      }
-    });
-    // console.log('here --------- :');
-    await Promise.all(localityPromises);
-    setTeamData(data);
-    // setIsFetching(false);
-  };
-
-  const {location, getCurrentLocation} = useLocation();
   const [isModalVisible, setModalVisible] = useState(false);
+  const markersRef = useRef([]);
   const mapRef = useRef(null);
 
-  // Fetch user members list
+  const {userMembersList, fetchUserMembersList} = useFetchUser();
+  const {location, getCurrentLocation} = useLocation();
+
+  // Notifications
   useEffect(() => {
-    if (!userMembersList) {
-      fetchUserMembersList();
+    onEvent('onMemberVerified', data => {
+      MemberVerifiedNotification(data);
+    });
+  }, []);
+
+  // const fetchLocalities = async () => {
+  //   const data = [];
+
+  //   const localityPromises = userMembersList?.map(async (member) => {
+  //     try {
+  //       const { coordinates } = member?.location || {};
+  //       if (!coordinates) throw new Error('Missing coordinates');
+
+  //       const [latitude, longitude] = coordinates;
+  //       const url = `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${longitude}&latitude=${latitude}&access_token=${accessToken}&limit=1`;
+  //       const response = await axios.get(url);
+
+  //       const currentLocality =
+  //         response?.data?.features[0]?.properties?.context.locality?.name || 'Not Found';
+  //       // console.log('payload', location, longitude);
+
+  //       const url_1 = `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${longitude},${latitude};${location?.longitude},${location?.latitude}?access_token=${accessToken}`;
+  //       const response_1 = await axios.get(url_1);
+  //       // console.log('response_1', response_1);
+
+  //       const duration = response_1?.data?.routes[0]?.duration;
+  //       const distance = response_1?.data?.routes[0]?.distance;
+
+  //       data.push({
+  //         ...member,
+  //         currentLocality,
+  //         eta: { distance, duration },
+  //       });
+  //     } catch (error) {
+  //       // console.error(`Error fetching locality for ${member?.name}:`, error);
+  //       data.push({
+  //         ...member,
+  //         currentLocality: 'Error Fetching Locality',
+  //       });
+  //     }
+  //   });
+
+  //   await Promise.all(localityPromises);
+  //   setTeamData(data);
+  // };
+
+  // Replace with your Mapbox API Access Token
+
+  // Function to fetch locality and ETA (distance, duration)
+  const fetchLocalities = async location => {
+    try {
+      const jwtToken = await AsyncStorage.getItem('token');
+
+      // Fetch members' last locations from the backend
+      const response = await axios.post(
+        `${devURL}/user/members/last-location`,
+        {},
+
+        {
+          headers: {
+            Authorization: `Bearer ${jwtToken}`, // Pass the user's token for authentication
+          },
+        },
+      );
+      // console.log('-------', response.data.data);
+      setTeamData(response.data.data);
+      const userMembersList = response?.data?.data || []; // Assuming the response has 'data' field with member info
+
+      if (!userMembersList.length) {
+        console.log('No members found.');
+        return;
+      }
+
+      const data = [];
+
+      // const localityPromises = userMembersList.map(async member => {
+      //   try {
+      //     const {coordinates} = member?.lastLocation || {};
+      //     if (!coordinates) throw new Error('Missing coordinates');
+
+      //     const [latitude, longitude] = coordinates;
+
+      //     // Fetch current locality using reverse geocoding
+      //     const url = `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${longitude}&latitude=${latitude}&access_token=${accessToken}&limit=1`;
+      //     const localityResponse = await axios.get(url);
+      //     const currentLocality =
+      //       localityResponse?.data?.features[0]?.properties?.context.locality
+      //         ?.name || 'Not Found';
+
+      //     // Fetch ETA (distance and duration) from user location to member's location
+      //     const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${longitude},${latitude};${location?.longitude},${location?.latitude}?access_token=${accessToken}`;
+      //     const directionsResponse = await axios.get(directionsUrl);
+
+      //     const duration = directionsResponse?.data?.routes[0]?.duration;
+      //     const distance = directionsResponse?.data?.routes[0]?.distance;
+
+      //     // Push the data to the result array
+      //     data.push({
+      //       ...member,
+      //       currentLocality,
+      //       eta: {distance, duration},
+      //     });
+      //   } catch (error) {
+      //     console.error(`Error fetching locality for ${member?.name}:`, error);
+      //     data.push({
+      //       ...member,
+      //       currentLocality: 'Error Fetching Locality',
+      //     });
+      //   }
+      // });
+
+      // await Promise.all(localityPromises);
+
+      // Log or use the data as needed
+      // console.log('=====',data);
+      return data;
+    } catch (error) {
+      console.error("Error fetching members' last locations:", error);
     }
+  };
+
+  useEffect(() => {
+    if (!userMembersList) fetchUserMembersList();
   }, [fetchUserMembersList, userMembersList]);
 
-  // Fetch user's current location
   useEffect(() => {
-    if (!location) {
-      getCurrentLocation();
-    }
+    if (!location) getCurrentLocation();
   }, [getCurrentLocation, location]);
 
   useEffect(() => {
-    if (userMembersList?.length && !teamData?.length) {
+    if (userMembersList?.length && !teamData?.length && location)
       fetchLocalities();
-    }
-  }, [userMembersList, teamData]);
+  }, [userMembersList, teamData, location]);
+
+  // useEffect(() => {
+  //   if (location) getAddressFromCoordinates([location?.longitude, location?.latitude]);
+  // }, [location]);
 
   useEffect(() => {
-    if (location) {
-      getAddressFromCoordinates([location?.longitude, location?.latitude]);
-    }
-  }, [location]);
-
-  // Center map on user's current location
-  useEffect(() => {
-    if (location) {
-      mapRef.current?.setCamera({
-        centerCoordinate: [location.longitude, location.latitude],
-        zoomLevel: 14,
-        animationDuration: 1000,
-      });
-    }
-  }, [location]);
-
-  const toggleModal = () => {
-    setModalVisible(!isModalVisible);
-  };
-
-  console.log('teamData========', teamData[0]?.name);
+    markersRef.current.forEach(marker => marker?.showCallout());
+  }, [teamData]);
+  // console.log('-----teamData--', teamData);
 
   return (
     <SafeAreaView style={styles.container}>
       {location && teamData ? (
-        <MapView ref={mapRef} style={styles.map}>
-          <Camera
-            zoomLevel={14}
-            centerCoordinate={[
-              location ? location.longitude : 0.0,
-              location ? location.latitude : 0.0,
-            ]}
+        <MapView
+          region={{
+            latitude: location?.latitude, // Initial latitude from location data
+            longitude: location?.longitude, // Initial longitude from location data
+            latitudeDelta: 0.0922, // Adjust zoom level
+            longitudeDelta: 0.0421,
+          }}
+          // onRegionChangeComplete={onRegionChange}
+          style={styles.map}>
+          <Marker
+            key={'uniqueKey'}
+            coordinate={{
+              latitude: location?.latitude,
+              longitude: location?.longitude,
+            }}
+            title={'Your Location'}
+            description={`Accuracy: 20 meters`}
           />
-
-          <MarkerView
-            allowOverlap={true}
-            coordinate={[
-              location?.longitude, // longitude
-              location?.latitude, // latitude
-            ]}>
-            <View style={styles.customMarker}>
-              <Icon name="map-marker" size={40} color="green" />
-            </View>
-          </MarkerView>
 
           {/* Render markers for user members */}
           {teamData?.map((member, index) => {
+            console.log('teamDatamember___', member?.lastLocation?.coordinates[0],);
+
             return (
-              <MarkerView
-                draggable={true}
-                animationMode="flyTo"
-                allowOverlap={true}
+              <Marker
                 key={index}
-                coordinate={[
-                  member?.location ? member?.location?.coordinates[1] : 0.0, // longitude
-                  member?.location ? member?.location?.coordinates[0] : 0.0, // latitude
-                ]}>
-                <View style={styles.markerTitle}>
-                  <Button
-                    style={styles.markerTitle}
-                    title={`Name: ${member?.name}\nAddress: ${
-                      member?.currentLocality
-                    }\nDistance: ${formatDistance(
-                      member?.eta?.distance,
-                    )}\nDuration: ${formatDuration(member?.eta?.duration)}`}
-                  />
-                </View>
-                <View style={styles.customMarker}>
-                  <Icon
-                    name="map-marker"
-                    size={30}
-                    color="#376ADA"
-                    style={styles.iconLeft}
-                  />
-                </View>
-              </MarkerView>
+                coordinate={{
+                  latitude: member?.lastLocation?.coordinates[0],
+                  longitude: member?.lastLocation?.coordinates[1],
+                }}
+                title={member?.name}
+                description={`${member.location} @ ${ moment(member.time).format('h:mm A')}`}
+                
+                onPress={() => {
+                  console.log('Marker pressed:', member?.name);
+                }}></Marker>
             );
           })}
         </MapView>
@@ -378,11 +312,48 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  customMarker: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  // customMarker: {
+  //   justifyContent: 'center',
+  //   alignItems: 'center',
+
+  // },
   markerImage: {
+    width: 50,
+    height: 50,
+  },
+  customMarker: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 5,
+    elevation: 5,
+  },
+  calloutContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 10,
+    elevation: 5,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  calloutTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: '#376ADA',
+  },
+  calloutText: {
+    fontSize: 14,
+    color: '#555',
+  },
+  iconLeft: {
+    alignSelf: 'center',
+  },
+
+  Marker: {
     width: 50,
     height: 50,
   },
